@@ -1,0 +1,130 @@
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import axios, { isAxiosError } from "axios";
+import { AuthResponse } from "./accountService";
+const apiClient = axios.create({
+  //baseURL: process.env.COMMODORE_API_BASE_URL,
+  baseURL: "http://192.168.100.98:8000/api/",
+  headers: {
+    "Content-Type": "application/json",
+    Accept: "application/json",
+  },
+});
+
+apiClient.interceptors.request.use(
+  async (config) => {
+    try {
+      const userInfoString = await AsyncStorage.getItem("userInfo");
+      if (userInfoString) {
+        const userInfo: Partial<AuthResponse> = JSON.parse(userInfoString);
+        if (userInfo.access) {
+          config.headers.Authorization = `Bearer ${userInfo.access}`;
+        }
+      }
+    } catch (e) {
+      console.error(
+        "Error reading user info from AsyncStorage or parsing JSON:",
+        e
+      );
+    }
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
+
+apiClient.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    const originalRequest = error.config;
+
+    // Check if the error is a 401 and if it's not a retry request
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      originalRequest._retry = true; // Mark the request as a retry
+
+      try {
+        const userInfoString = await AsyncStorage.getItem("userInfo");
+        if (!userInfoString) {
+          // If no user info, can't refresh, so just reject
+          return Promise.reject(error);
+        }
+
+        const userInfo: AuthResponse = JSON.parse(userInfoString);
+        const { refresh } = userInfo;
+
+        if (!refresh) {
+          // No refresh token available, logout user
+          await AsyncStorage.removeItem("userInfo");
+          // Here you might want to navigate the user to the login screen
+          return Promise.reject(error);
+        }
+
+        // Request a new access token using the refresh token
+        const { data } = await axios.post(
+          `${"http://192.168.100.98:8000/api/"}token/refresh/`,
+          {
+            refresh: refresh,
+          }
+        );
+
+        const newAccessToken = data.access;
+        const newRefreshToken = data.refresh; // Check for a new refresh token
+
+        // Update the user info with the new tokens
+        userInfo.access = newAccessToken;
+        if (newRefreshToken) {
+          // If the server sent a new refresh token, update it
+          userInfo.refresh = newRefreshToken;
+        }
+        await AsyncStorage.setItem("userInfo", JSON.stringify(userInfo));
+
+        // Update the Authorization header for the original request and for subsequent requests
+        originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
+        apiClient.defaults.headers.common.Authorization = `Bearer ${newAccessToken}`;
+
+        // Retry the original request with the new token
+        return apiClient(originalRequest);
+      } catch (refreshError) {
+        // If the refresh token is invalid or the refresh call fails, logout the user
+        console.error("Unable to refresh token, logging out:", refreshError);
+        await AsyncStorage.removeItem("userInfo");
+        // Here you might want to navigate the user to the login screen
+        return Promise.reject(refreshError);
+      }
+    }
+
+    // For all other errors, just reject the promise
+    return Promise.reject(error);
+  }
+);
+
+/**
+ * A centralized API error handler.
+ * @param error The error object caught in the catch block.
+ * @param customMessage A custom, user-friendly message to display.
+ * @returns A new Error object with a formatted message.
+ */
+export const handleApiError = (
+  error: unknown,
+  customMessage: string
+): Error => {
+  if (isAxiosError(error) && error.response) {
+    // Log the detailed error for debugging
+    console.error("API Error:", {
+      status: error.response.status,
+      data: error.response.data,
+      headers: error.response.headers,
+    });
+    // Extract a message from the API response if available, otherwise use the custom one
+    const apiErrorMessage =
+      error.response.data?.message ||
+      error.response.data?.detail ||
+      customMessage;
+    return new Error(apiErrorMessage);
+  }
+  // Handle network errors or other unexpected errors
+  console.error("An unexpected error occurred:", error);
+  return new Error(
+    customMessage || "An unexpected network error occurred. Please try again."
+  );
+};
+
+export default apiClient;

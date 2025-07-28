@@ -1,7 +1,9 @@
 "use client";
 
+import accountService from "@/services/accountService";
 import { useState } from "react";
 import {
+  Alert,
   Dimensions,
   KeyboardAvoidingView,
   Platform,
@@ -23,14 +25,19 @@ export default function AuthScreen() {
   const [showPassword, setShowPassword] = useState(false);
   const [isLogin, setIsLogin] = useState(true);
 
-  const handleAuth = () => {
-    // Authentication logic will be implemented
-  };
-
   const handleBack = () => {};
 
   const togglePasswordVisibility = () => {
     setShowPassword(!showPassword);
+  };
+
+  const handleLogin = async () => {
+    try {
+      const response = await accountService.login({ email, password });
+      console.log(response);
+    } catch (error) {
+      Alert.alert("Erreur", "Une erreur est survenue lors de la connexion.");
+    }
   };
 
   return (
@@ -109,7 +116,7 @@ export default function AuthScreen() {
                 {/* Login Button */}
                 <TouchableOpacity
                   style={styles.loginButton}
-                  onPress={handleAuth}
+                  onPress={handleLogin}
                   className="bg-[#587950]"
                 >
                   <Text style={styles.loginButtonText}>Se connecter</Text>

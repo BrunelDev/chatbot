@@ -1,8 +1,11 @@
 "use client";
 
+import accountService from "@/services/accountService";
 import { router } from "expo-router";
+import { Eye, EyeOff } from "lucide-react-native";
 import { useState } from "react";
 import {
+  Alert,
   Dimensions,
   KeyboardAvoidingView,
   Platform,
@@ -21,19 +24,25 @@ export default function AuthScreen() {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isLogin, setIsLogin] = useState(true);
+  const [passwordConfirm, setPasswordConfirm] = useState("");
 
-  const handleAuth = () => {
-    // Authentication logic will be implemented
+  const handleRegister = async () => {
+    try {
+      const response = await accountService.register({
+        email,
+        password,
+        password_confirm: passwordConfirm,
+      });
+      console.log(response);
+    } catch (error) {
+      Alert.alert("Erreur", "Une erreur est survenue lors de la connexion.");
+    }
   };
 
   const handleBack = () => {};
 
   const togglePasswordVisibility = () => {
     setShowPassword(!showPassword);
-  };
-
-  const toggleAuthMode = () => {
-    setIsLogin(!isLogin);
   };
 
   return (
@@ -89,6 +98,7 @@ export default function AuthScreen() {
                       placeholderTextColor="#999"
                       value={password}
                       onChangeText={setPassword}
+                      keyboardType="default"
                       secureTextEntry={!showPassword}
                     />
                     <TouchableOpacity
@@ -108,8 +118,9 @@ export default function AuthScreen() {
                       style={styles.input}
                       placeholder="Mot de passe"
                       placeholderTextColor="#999"
-                      value={password}
-                      onChangeText={setPassword}
+                      value={passwordConfirm}
+                      keyboardType="default"
+                      onChangeText={(text) => setPasswordConfirm(text)}
                       secureTextEntry={!showPassword}
                     />
                     <TouchableOpacity
@@ -117,7 +128,7 @@ export default function AuthScreen() {
                       style={styles.eyeIcon}
                     >
                       <Text style={styles.eyeIconText}>
-                        {showPassword ? "👁" : "👁"}
+                        {showPassword ? <Eye /> : <EyeOff />}
                       </Text>
                     </TouchableOpacity>
                   </View>
@@ -126,7 +137,7 @@ export default function AuthScreen() {
                 {/* Login Button */}
                 <TouchableOpacity
                   style={styles.loginButton}
-                  onPress={handleAuth}
+                  onPress={handleRegister}
                   className="bg-[#587950]"
                 >
                   <Text style={styles.loginButtonText}>Créer mon compte</Text>
