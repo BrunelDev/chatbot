@@ -1,3 +1,4 @@
+import { GoBack } from "@/components/headers/goBack";
 import accountService, { AuthResponse } from "@/services/accountService";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router, useLocalSearchParams } from "expo-router";
@@ -13,7 +14,6 @@ import {
   View,
 } from "react-native";
 import { OtpInput } from "react-native-otp-entry";
-import { GoBack } from "@/components/headers/goBack";
 export default function OtpPage() {
   const { source, email: emailFromParams } = useLocalSearchParams<{
     source: string;
@@ -115,8 +115,8 @@ export default function OtpPage() {
                 }. Veuillez le saisir ci-dessous pour vérifier votre compte.`}
           </Text>
           <OtpInput
-            numberOfDigits={6}
-            focusColor="orange"
+            numberOfDigits={4}
+            focusColor="#587950"
             autoFocus={false}
             hideStick={true}
             blurOnFilled={true}

@@ -1,8 +1,6 @@
 "use client";
 
 import accountService from "@/services/accountService";
-import { router } from "expo-router";
-import { ArrowLeft, Eye, EyeOff, Lock, Mail } from "lucide-react-native";
 import { useState } from "react";
 import {
   Alert,
@@ -14,7 +12,10 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
-  View } from "react-native"
+  View,
+} from "react-native";
+
+import { router } from "expo-router";
 
 const { width, height } = Dimensions.get("window");
 
@@ -23,25 +24,20 @@ export default function AuthScreen() {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isLogin, setIsLogin] = useState(true);
-  const [passwordConfirm, setPasswordConfirm] = useState("");
-
-  const handleRegister = async () => {
-    try {
-      const response = await accountService.register({
-        email,
-        password,
-        password_confirm: passwordConfirm,
-      });
-      console.log(response);
-    } catch (error) {
-      Alert.alert("Erreur", "Une erreur est survenue lors de la connexion.");
-    }
-  };
 
   const handleBack = () => {};
 
   const togglePasswordVisibility = () => {
     setShowPassword(!showPassword);
+  };
+
+  const handleLogin = async () => {
+    try {
+      const response = await accountService.login({ email, password });
+      console.log(response);
+    } catch (error) {
+      Alert.alert("Erreur", "Une erreur est survenue lors de la connexion.");
+    }
   };
 
   return (
@@ -54,7 +50,7 @@ export default function AuthScreen() {
           {/* Header */}
           <View style={styles.header}>
             <TouchableOpacity onPress={handleBack} style={styles.backButton}>
-              <ArrowLeft size={24} color="#333" />
+              <Text style={styles.backArrow}>←</Text>
             </TouchableOpacity>
             <View style={styles.placeholder} />
           </View>
@@ -63,18 +59,18 @@ export default function AuthScreen() {
           <View style={styles.content}>
             <View style={styles.formContainer}>
               <Text style={styles.title} className="text-[#88540B]">
-                Inscrivez-vous!
+                Connectez-vous!
               </Text>
               <Text style={styles.subtitle}>
-                Bienvenu sur notre app. Renseignez vos informations pour créer
-                votre compte.
+                Heureux de vous revoir! Renseignez vos informations pour vous
+                connecter.
               </Text>
 
               <View style={styles.form}>
                 {/* Email Input */}
                 <View style={styles.inputContainer}>
                   <View style={styles.inputWrapper}>
-                    <Mail color="#999" size={20} />
+                    <Text style={styles.inputIcon}>✉</Text>
                     <TextInput
                       style={styles.input}
                       placeholder="Mail"
@@ -90,34 +86,13 @@ export default function AuthScreen() {
                 {/* Password Input */}
                 <View style={styles.inputContainer}>
                   <View style={styles.inputWrapper}>
-                    <Lock color="#999" size={20} />
+                    <Text style={styles.inputIcon}>🔒</Text>
                     <TextInput
                       style={styles.input}
                       placeholder="Mot de passe"
                       placeholderTextColor="#999"
                       value={password}
                       onChangeText={setPassword}
-                      keyboardType="default"
-                      secureTextEntry={!showPassword}
-                    />
-                    <TouchableOpacity
-                      onPress={togglePasswordVisibility}
-                      style={styles.eyeIcon}
-                    >
-                      {showPassword ? <Eye color="#999" size={20} /> : <EyeOff color="#999" size={20} />}
-                    </TouchableOpacity>
-                  </View>
-                </View>
-                <View style={styles.inputContainer}>
-                  <View style={styles.inputWrapper}>
-                    <Lock color="#999" size={20} />
-                    <TextInput
-                      style={styles.input}
-                      placeholder="Mot de passe"
-                      placeholderTextColor="#999"
-                      value={passwordConfirm}
-                      keyboardType="default"
-                      onChangeText={setPasswordConfirm}
                       secureTextEntry={!showPassword}
                     />
                     <TouchableOpacity
@@ -125,32 +100,37 @@ export default function AuthScreen() {
                       style={styles.eyeIcon}
                     >
                       <Text style={styles.eyeIconText}>
-                        {showPassword ? <Eye /> : <EyeOff />}
+                        {showPassword ? "👁" : "👁"}
                       </Text>
                     </TouchableOpacity>
                   </View>
                 </View>
 
+                {/* Forgot Password */}
+                <TouchableOpacity style={styles.forgotPassword}>
+                  <Text style={styles.forgotPasswordText}>
+                    Mot de passe oublié
+                  </Text>
+                </TouchableOpacity>
+
                 {/* Login Button */}
                 <TouchableOpacity
                   style={styles.loginButton}
-                  onPress={handleRegister}
+                  onPress={handleLogin}
                   className="bg-[#587950]"
                 >
-                  <Text style={styles.loginButtonText}>Créer mon compte</Text>
+                  <Text style={styles.loginButtonText}>Se connecter</Text>
                 </TouchableOpacity>
 
                 {/* Sign Up Link */}
                 <View style={styles.signupContainer}>
-                  <Text style={styles.signupText}>
-                    Vous avez déjà un compte!
-                  </Text>
+                  <Text style={styles.signupText}>Vous êtes nouveau? </Text>
                   <TouchableOpacity
                     onPress={() => {
-                      router.push("/login");
+                      router.push("/register");
                     }}
                   >
-                    <Text style={styles.signupLink}>Se connecter</Text>
+                    <Text style={styles.signupLink}>S&apos;inscrire</Text>
                   </TouchableOpacity>
                 </View>
               </View>
