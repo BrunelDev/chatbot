@@ -27,7 +27,7 @@ export function PrimaryButton({
       className={`flex flex-row gap-3 h-[48px] w-full items-center justify-center rounded-[16px] ${
         disabled || (loading && showLoading)
           ? "bg-international_orange-300"
-          : "bg-orange-400"
+          : "bg-[#587950]   "
       } ${className}`}
       onPressOut={() => {
         try {

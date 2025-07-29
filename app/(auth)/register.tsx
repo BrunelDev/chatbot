@@ -1,5 +1,6 @@
 "use client";
 
+import { PrimaryButton } from "@/components/buttons/primaryButton";
 import accountService from "@/services/accountService";
 import { router } from "expo-router";
 import { Eye, EyeOff } from "lucide-react-native";
@@ -135,13 +136,15 @@ export default function AuthScreen() {
                 </View>
 
                 {/* Login Button */}
-                <TouchableOpacity
-                  style={styles.loginButton}
-                  onPress={handleRegister}
-                  className="bg-[#587950]"
-                >
-                  <Text style={styles.loginButtonText}>Créer mon compte</Text>
-                </TouchableOpacity>
+                <PrimaryButton
+                  title="Créer mon compte"
+                  handlePress={handleRegister}
+                  disabled={!email || !password || !passwordConfirm}
+                  showLoading={true}
+                  loadingValue="Création en cours..."
+                  activeOpacity={0.8}
+                  className="w-full"
+                />
 
                 {/* Sign Up Link */}
                 <View style={styles.signupContainer}>
