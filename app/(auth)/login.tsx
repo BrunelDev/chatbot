@@ -16,6 +16,9 @@ import {
 } from "react-native";
 
 import { router } from "expo-router";
+import { ArrowLeft, Eye, EyeOff, Lock, Mail } from 'lucide-react-native';
+import { PrimaryButton } from "@/components/buttons/primaryButton";
+import { GoBack } from "@/components/headers/goBack";
 
 const { width, height } = Dimensions.get("window");
 
@@ -23,7 +26,6 @@ export default function AuthScreen() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [isLogin, setIsLogin] = useState(true);
 
   const handleBack = () => {};
 
@@ -36,6 +38,7 @@ export default function AuthScreen() {
       const response = await accountService.login({ email, password });
       console.log(response);
     } catch (error) {
+      console.error('Login failed:', error);
       Alert.alert("Erreur", "Une erreur est survenue lors de la connexion.");
     }
   };
@@ -48,12 +51,7 @@ export default function AuthScreen() {
           style={styles.keyboardView}
         >
           {/* Header */}
-          <View style={styles.header}>
-            <TouchableOpacity onPress={handleBack} style={styles.backButton}>
-              <Text style={styles.backArrow}>←</Text>
-            </TouchableOpacity>
-            <View style={styles.placeholder} />
-          </View>
+          <GoBack />
 
           {/* Content */}
           <View style={styles.content}>
@@ -70,9 +68,9 @@ export default function AuthScreen() {
                 {/* Email Input */}
                 <View style={styles.inputContainer}>
                   <View style={styles.inputWrapper}>
-                    <Text style={styles.inputIcon}>✉</Text>
+                    <Mail style={styles.inputIcon} />
                     <TextInput
-                      style={styles.input}
+                          style={styles.input}
                       placeholder="Mail"
                       placeholderTextColor="#999"
                       value={email}
@@ -86,7 +84,7 @@ export default function AuthScreen() {
                 {/* Password Input */}
                 <View style={styles.inputContainer}>
                   <View style={styles.inputWrapper}>
-                    <Text style={styles.inputIcon}>🔒</Text>
+                    <Lock style={styles.inputIcon} />
                     <TextInput
                       style={styles.input}
                       placeholder="Mot de passe"
@@ -99,30 +97,34 @@ export default function AuthScreen() {
                       onPress={togglePasswordVisibility}
                       style={styles.eyeIcon}
                     >
-                      <Text style={styles.eyeIconText}>
-                        {showPassword ? "👁" : "👁"}
-                      </Text>
+                      {showPassword ? <EyeOff color="#333" size={18} /> : <Eye color="#333" size={18} />}
                     </TouchableOpacity>
                   </View>
                 </View>
 
                 {/* Forgot Password */}
                 <TouchableOpacity style={styles.forgotPassword}>
-                  <Text style={styles.forgotPasswordText}>
+                  <Text style={styles.forgotPasswordText}
+                  onPress={() => {
+                    router.push({pathname: "/forgetPassword", params : {source : "password_reset", email : email}});
+                  }}
+                  >
                     Mot de passe oublié
                   </Text>
                 </TouchableOpacity>
 
                 {/* Login Button */}
-                <TouchableOpacity
-                  style={styles.loginButton}
-                  onPress={handleLogin}
-                  className="bg-[#587950]"
-                >
-                  <Text style={styles.loginButtonText}>Se connecter</Text>
-                </TouchableOpacity>
+                <PrimaryButton
+                  title="Se connecter"
+                  handlePress={handleLogin}
+                  disabled={!email || !password}
+                  showLoading={true}
+                  loadingValue="Connexion en cours..."
+                />
+               
 
                 {/* Sign Up Link */}
+                
                 <View style={styles.signupContainer}>
                   <Text style={styles.signupText}>Vous êtes nouveau? </Text>
                   <TouchableOpacity
@@ -168,11 +170,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
-  backArrow: {
-    fontSize: 24,
-    color: "#333",
-    fontWeight: "bold",
-  },
+
   headerTitle: {
     fontSize: 18,
     fontWeight: "600",

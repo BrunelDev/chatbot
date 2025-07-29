@@ -16,7 +16,7 @@ import {
 import { OtpInput } from "react-native-otp-entry";
 export default function OtpPage() {
   const { source, email: emailFromParams } = useLocalSearchParams<{
-    source: string;
+    source: "email_verification" | "password_reset";
     email: string;
   }>();
   // User state from AsyncStorage might still be useful for display purposes or if emailFromParams is not available for some reason.
@@ -43,9 +43,10 @@ export default function OtpPage() {
       return;
     }
 
-    if (source === "register") {
+    if (source === "email_verification") {
       await handleVerifyMail(effectiveEmail, code);
-    } else if (source === "passwordReset") {
+      router.push("/(auth)/login");
+    } else if (source === "password_reset") {
       // Navigate to a new page to set the new password
       // The actual API call to verify/reset password will happen on that new page
       try {
@@ -106,7 +107,7 @@ export default function OtpPage() {
             Code de vérification
           </Text>
           <Text>
-            {source === "passwordReset"
+            {source === "password_reset"
               ? `Nous avons envoyé un code à ${
                   effectiveEmail || "votre adresse e-mail"
                 }. Veuillez le saisir ci-dessous pour continuer le processus de réinitialisation de mot de passe.`

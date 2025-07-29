@@ -1,9 +1,10 @@
 "use client";
 
+import { PrimaryButton } from "@/components/buttons/primaryButton";
 import accountService from "@/services/accountService";
 import { router } from "expo-router";
-import { ArrowLeft, Eye, EyeOff, Lock, Mail } from "lucide-react-native";
-import { useState } from "react";
+import { ArrowLeft, Eye, EyeOff, Lock, Mail, User } from "lucide-react-native";
+import React, { useState } from "react";
 import {
   Alert,
   Dimensions,
@@ -14,27 +15,29 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
-  View } from "react-native"
+  View,
+} from "react-native";
 
 const { width, height } = Dimensions.get("window");
 
 export default function AuthScreen() {
+  const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [isLogin, setIsLogin] = useState(true);
-  const [passwordConfirm, setPasswordConfirm] = useState("");
 
   const handleRegister = async () => {
     try {
       const response = await accountService.register({
         email,
         password,
-        password_confirm: passwordConfirm,
+        password_confirm: password,
       });
+      router.push({pathname: "/otpPage", params : {source : "email_verification", email : email}});
       console.log(response);
     } catch (error) {
-      Alert.alert("Erreur", "Une erreur est survenue lors de la connexion.");
+      console.log(error);
+      Alert.alert("Erreur", error.response.data);
     }
   };
 
@@ -71,11 +74,29 @@ export default function AuthScreen() {
               </Text>
 
               <View style={styles.form}>
+                {/* Nom Input */}
+                <View style={styles.inputContainer}>
+                  <View style={styles.inputWrapper}>
+                    <User style={styles.inputIcon} size={18} color="#999" />
+                    <TextInput
+                      style={styles.input}
+                      className="pl-1"
+                      placeholder="Nom"
+                      placeholderTextColor="#999"
+                      value={username}
+                      onChangeText={setUsername}
+                      keyboardType="email-address"
+                      autoCapitalize="none"
+                    />
+                  </View>
+                </View>
+
                 {/* Email Input */}
                 <View style={styles.inputContainer}>
                   <View style={styles.inputWrapper}>
-                    <Mail color="#999" size={20} />
+                    <Mail color="#999" size={18} />
                     <TextInput
+                      className="pl-1"
                       style={styles.input}
                       placeholder="Mail"
                       placeholderTextColor="#999"
@@ -90,8 +111,9 @@ export default function AuthScreen() {
                 {/* Password Input */}
                 <View style={styles.inputContainer}>
                   <View style={styles.inputWrapper}>
-                    <Lock color="#999" size={20} />
+                    <Lock color="#999" size={18} />
                     <TextInput
+                      className="pl-1"
                       style={styles.input}
                       placeholder="Mot de passe"
                       placeholderTextColor="#999"
@@ -104,41 +126,23 @@ export default function AuthScreen() {
                       onPress={togglePasswordVisibility}
                       style={styles.eyeIcon}
                     >
-                      {showPassword ? <Eye color="#999" size={20} /> : <EyeOff color="#999" size={20} />}
-                    </TouchableOpacity>
-                  </View>
-                </View>
-                <View style={styles.inputContainer}>
-                  <View style={styles.inputWrapper}>
-                    <Lock color="#999" size={20} />
-                    <TextInput
-                      style={styles.input}
-                      placeholder="Mot de passe"
-                      placeholderTextColor="#999"
-                      value={passwordConfirm}
-                      keyboardType="default"
-                      onChangeText={setPasswordConfirm}
-                      secureTextEntry={!showPassword}
-                    />
-                    <TouchableOpacity
-                      onPress={togglePasswordVisibility}
-                      style={styles.eyeIcon}
-                    >
-                      <Text style={styles.eyeIconText}>
-                        {showPassword ? <Eye /> : <EyeOff />}
-                      </Text>
+                      {showPassword ? (
+                        <Eye color="#999" size={18} />
+                      ) : (
+                        <EyeOff color="#999" size={18} />
+                      )}
                     </TouchableOpacity>
                   </View>
                 </View>
 
                 {/* Login Button */}
-                <TouchableOpacity
-                  style={styles.loginButton}
-                  onPress={handleRegister}
-                  className="bg-[#587950]"
-                >
-                  <Text style={styles.loginButtonText}>Créer mon compte</Text>
-                </TouchableOpacity>
+                <PrimaryButton
+                  title="Créer mon compte"
+                  handlePress={handleRegister}
+                  disabled={!email || !password || !username}
+                  showLoading={true}
+                  loadingValue="Création en cours..."
+                />
 
                 {/* Sign Up Link */}
                 <View style={styles.signupContainer}>

@@ -1,270 +1,94 @@
-"use client";
-
+import { PrimaryButton } from "@/components/buttons/primaryButton";
+import { GoBack } from "@/components/headers/goBack";
 import accountService from "@/services/accountService";
+import { Image } from "expo-image";
+import { router } from "expo-router";
 import { useState } from "react";
 import {
   Alert,
-  Dimensions,
+  Keyboard,
   KeyboardAvoidingView,
   Platform,
   SafeAreaView,
-  StyleSheet,
   Text,
   TextInput,
-  TouchableOpacity,
+  TouchableWithoutFeedback,
   View,
 } from "react-native";
-
-import { router } from "expo-router";
-
-const { width, height } = Dimensions.get("window");
-
-export default function AuthScreen() {
+export default function ForgotPassword() {
   const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
-  const [isLogin, setIsLogin] = useState(true);
-
-  const handleBack = () => {};
-
-  const togglePasswordVisibility = () => {
-    setShowPassword(!showPassword);
-  };
-
-  const handleLogin = async () => {
+  const [phone, setPhone] = useState("");
+  const [error, setError] = useState("");
+  const handleRequestPasswordReset = async () => {
     try {
-      const response = await accountService.login({ email, password });
-      console.log(response);
+      await accountService.requestPasswordReset({ email });
+      router.push({
+        pathname: "/(auth)/otpPage",
+        params: { source: "password_reset", email },
+      });
     } catch (error) {
-      Alert.alert("Erreur", "Une erreur est survenue lors de la connexion.");
+      if (error instanceof Error) {
+        setError(error.message);
+        Alert.alert(
+          "Une erreur est survenue lors de la réinitialisation du mot de passe.",
+          error.message
+        );
+      }
     }
   };
 
   return (
-    <View className="bg-[#FEFDE8] h-full">
-      <SafeAreaView style={styles.container}>
-        <KeyboardAvoidingView
-          behavior={Platform.OS === "ios" ? "padding" : "height"}
-          style={styles.keyboardView}
-        >
-          {/* Header */}
-          <View style={styles.header}>
-            <TouchableOpacity onPress={handleBack} style={styles.backButton}>
-              <Text style={styles.backArrow}>←</Text>
-            </TouchableOpacity>
-            <View style={styles.placeholder} />
-          </View>
-
-          {/* Content */}
-          <View style={styles.content}>
-            <View style={styles.formContainer}>
-              <Text style={styles.title} className="text-[#88540B]">
-                Connectez-vous!
-              </Text>
-              <Text style={styles.subtitle}>
-                Heureux de vous revoir! Renseignez vos informations pour vous
-                connecter.
-              </Text>
-
-              <View style={styles.form}>
-                {/* Email Input */}
-                <View style={styles.inputContainer}>
-                  <View style={styles.inputWrapper}>
-                    <Text style={styles.inputIcon}>✉</Text>
-                    <TextInput
-                      style={styles.input}
-                      placeholder="Mail"
-                      placeholderTextColor="#999"
-                      value={email}
-                      onChangeText={setEmail}
-                      keyboardType="email-address"
-                      autoCapitalize="none"
-                    />
-                  </View>
-                </View>
-
-                {/* Password Input */}
-                <View style={styles.inputContainer}>
-                  <View style={styles.inputWrapper}>
-                    <Text style={styles.inputIcon}>🔒</Text>
-                    <TextInput
-                      style={styles.input}
-                      placeholder="Mot de passe"
-                      placeholderTextColor="#999"
-                      value={password}
-                      onChangeText={setPassword}
-                      secureTextEntry={!showPassword}
-                    />
-                    <TouchableOpacity
-                      onPress={togglePasswordVisibility}
-                      style={styles.eyeIcon}
-                    >
-                      <Text style={styles.eyeIconText}>
-                        {showPassword ? "👁" : "👁"}
-                      </Text>
-                    </TouchableOpacity>
-                  </View>
-                </View>
-
-                {/* Forgot Password */}
-                <TouchableOpacity style={styles.forgotPassword}>
-                  <Text style={styles.forgotPasswordText}>
-                    Mot de passe oublié
-                  </Text>
-                </TouchableOpacity>
-
-                {/* Login Button */}
-                <TouchableOpacity
-                  style={styles.loginButton}
-                  onPress={handleLogin}
-                  className="bg-[#587950]"
-                >
-                  <Text style={styles.loginButtonText}>Se connecter</Text>
-                </TouchableOpacity>
-
-                {/* Sign Up Link */}
-                <View style={styles.signupContainer}>
-                  <Text style={styles.signupText}>Vous êtes nouveau? </Text>
-                  <TouchableOpacity
-                    onPress={() => {
-                      router.push("/register");
-                    }}
-                  >
-                    <Text style={styles.signupLink}>S&apos;inscrire</Text>
-                  </TouchableOpacity>
-                </View>
+    <KeyboardAvoidingView
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      style={{ flex: 1 }}
+    >
+      <SafeAreaView className="flex-1">
+        <GoBack />
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
+          <View className="flex-1 justify-center px-4 gap-y-10">
+            <Text className="text-big_stone font-black text-4xl">
+              Mot de passe oublié
+            </Text>
+            <Text>
+              Veuillez sélectionner vos coordonnées et nous vous enverrons un
+              code de vérification pour réinitialiser votre mot de passe
+            </Text>
+            <View className="relative">
+              <TextInput
+                placeholderTextColor={"#02244099"}
+                cursorColor={"#FF9432"}
+                className="bg-[#E5EAE1] h-20 rounded-xl pl-12 pr-4 placeholder:font-urbanist"
+                placeholder="*****jns@gmail.com"
+                keyboardType="email-address"
+                textContentType="emailAddress"
+                autoComplete="email"
+                autoCapitalize="none"
+                autoCorrect={false}
+                value={email}
+                onChangeText={setEmail}
+                returnKeyType="done"
+              />
+              <View className="absolute top-1/2 left-3 -translate-y-1/2">
+                <Image
+                  source={require("../../assets/icons/mail.svg")}
+                  contentFit="cover"
+                  style={{ width: 24, height: 24 }}
+                />
               </View>
             </View>
           </View>
-        </KeyboardAvoidingView>
+        </TouchableWithoutFeedback>
+        <View className="px-4 pb-4 mt-20">
+          <PrimaryButton
+            title={"Envoyer le code de vérification"}
+            handlePress={async() => {
+              await handleRequestPasswordReset();
+            }}
+            showLoading={true}
+            disabled={email === ""}
+          />
+        </View>
       </SafeAreaView>
-    </View>
+    </KeyboardAvoidingView>
   );
 }
-
-const styles = StyleSheet.create({
-  backgroundImage: {
-    flex: 1,
-    width: width,
-    height: height,
-  },
-  container: {
-    flex: 1,
-  },
-  keyboardView: {
-    flex: 1,
-  },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: 20,
-    paddingTop: 10,
-    paddingBottom: 20,
-  },
-  backButton: {
-    width: 40,
-    height: 40,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  backArrow: {
-    fontSize: 24,
-    color: "#333",
-    fontWeight: "bold",
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: "600",
-    color: "#333",
-  },
-  placeholder: {
-    width: 40,
-  },
-  content: {
-    flex: 1,
-    justifyContent: "flex-end",
-  },
-  formContainer: {
-    borderTopLeftRadius: 30,
-    borderTopRightRadius: 30,
-    paddingHorizontal: 30,
-    paddingTop: 40,
-    paddingBottom: 50,
-    minHeight: height * 0.6,
-  },
-  title: {
-    fontSize: 28,
-    marginBottom: 10,
-    textAlign: "center",
-  },
-  subtitle: {
-    fontSize: 16,
-    textAlign: "center",
-    marginBottom: 40,
-    lineHeight: 22,
-  },
-  form: {
-    gap: 20,
-  },
-  inputContainer: {
-    marginBottom: 5,
-  },
-  inputWrapper: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#f5f5f5",
-    borderRadius: 12,
-    paddingHorizontal: 15,
-    paddingVertical: 15,
-  },
-  inputIcon: {
-    fontSize: 18,
-    marginRight: 12,
-    color: "#666",
-  },
-  input: {
-    flex: 1,
-    fontSize: 16,
-    color: "#333",
-  },
-  eyeIcon: {
-    padding: 5,
-  },
-  eyeIconText: {
-    fontSize: 18,
-    color: "#666",
-  },
-  forgotPassword: {
-    alignSelf: "flex-end",
-    marginTop: -10,
-    marginBottom: 10,
-  },
-  forgotPasswordText: {
-    fontSize: 14,
-    color: "#666",
-  },
-  loginButton: {
-    borderRadius: 12,
-    paddingVertical: 18,
-    alignItems: "center",
-    marginTop: 10,
-  },
-  loginButtonText: {
-    color: "#fff",
-    fontSize: 16,
-    fontWeight: "600",
-  },
-  signupContainer: {
-    flexDirection: "row",
-    justifyContent: "center",
-    alignItems: "center",
-    marginTop: 20,
-  },
-  signupText: {
-    fontSize: 14,
-  },
-  signupLink: {
-    fontSize: 14,
-  },
-});

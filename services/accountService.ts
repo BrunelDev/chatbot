@@ -118,6 +118,16 @@ export interface SubscriptionStatus {
 // #region -------- API FUNCTIONS --------
 
 const accountService = {
+  deleteAccount: async (): Promise<{ message: string }> => {
+    try {
+      const response = await apiClient.delete<{ message: string }>(
+        "/api/auth/delete-account/"
+      );
+      return response.data;
+    } catch (error) {
+      throw handleApiError(error, "An error occurred while deleting the account.");
+    }
+  },
   register: async (payload: RegisterPayload): Promise<RegisterResponse> => {
     try {
       console.log(payload);

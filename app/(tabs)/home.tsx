@@ -1,35 +1,49 @@
-import React from 'react';
-import { View, Alert, Text } from 'react-native';
-import { PrimaryButton } from '@/components/buttons/primaryButton';
-import { router } from 'expo-router';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { PrimaryButton } from "@/components/buttons/primaryButton";
+import accountService from "@/services/accountService";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { router } from "expo-router";
+import React from "react";
+import { Alert, Text, View } from "react-native";
 
 export default function HomeScreen() {
   const handleLogout = async () => {
     try {
-      await AsyncStorage.removeItem('accessToken');
-      await AsyncStorage.removeItem('refreshToken');
-      router.replace('/(auth)/login');
-      Alert.alert('Logout', 'You have been logged out successfully.');
+      await AsyncStorage.removeItem("accessToken");
+      await AsyncStorage.removeItem("refreshToken");
+      router.replace("/(auth)/login");
+      Alert.alert("Logout", "You have been logged out successfully.");
     } catch (error) {
-      console.error('Failed to logout:', error);
-      Alert.alert('Error', 'Failed to logout. Please try again.');
+      console.error("Failed to logout:", error);
+      Alert.alert("Error", "Failed to logout. Please try again.");
     }
   };
 
   const handleDeleteAccount = () => {
     Alert.alert(
-      'Delete Account',
-      'Are you sure you want to delete your account? This action is permanent.',
+      "Supprimer le compte",
+      "Voulez-vous vraiment supprimer votre compte ? Cette action est irréversible.",
       [
-        { text: 'Cancel', style: 'cancel' },
         {
-          text: 'Delete',
-          onPress: () => {
-            console.log('Account deletion initiated');
-            // Implement account deletion logic here
+          text: "Annuler",
+          style: "cancel",
+        },
+        {
+          text: "OK",
+          onPress: async () => {
+            try {
+              const response = await accountService.deleteAccount();
+              Alert.alert("Suppression", response.message);
+              await AsyncStorage.removeItem("accessToken");
+              await AsyncStorage.removeItem("refreshToken");
+              router.replace("/(auth)/login");
+            } catch (error: any) {
+              Alert.alert(
+                "Erreur",
+                error.message ||
+                  "Une erreur est survenue lors de la suppression de votre compte."
+              );
+            }
           },
-          style: 'destructive',
         },
       ]
     );

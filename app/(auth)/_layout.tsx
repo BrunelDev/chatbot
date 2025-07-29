@@ -8,6 +8,10 @@ export default function RootLayout() {
       <Stack>
         <Stack.Screen name="login" options={{ headerShown: false }} />
         <Stack.Screen name="register" options={{ headerShown: false }} />
+        <Stack.Screen name="otpPage" options={{ headerShown: false }} />
+        <Stack.Screen name="forgetPassword" options={{ headerShown: false }} />
+        <Stack.Screen name="changePassword" options={{ headerShown: false }} />
+
       </Stack>
       <StatusBar style="auto" />
     </>

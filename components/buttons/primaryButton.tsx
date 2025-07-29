@@ -1,6 +1,6 @@
 import { Spinner } from "@/components/ui/spinner";
 import { useState } from "react";
-import { Text, TouchableOpacity } from "react-native";
+import { Text, TouchableOpacity, View } from "react-native";
 import colors from "tailwindcss/colors";
 
 export function PrimaryButton({
@@ -24,11 +24,7 @@ export function PrimaryButton({
   return (
     <TouchableOpacity
       activeOpacity={disabled ? 1 : activeOpacity}
-      className={`flex flex-row gap-3 h-[48px] w-full items-center justify-center rounded-[16px] ${
-        disabled || (loading && showLoading)
-          ? "bg-international_orange-300"
-          : "bg-orange-400"
-      } ${className}`}
+      className={`relative flex flex-row gap-3 h-[48px] w-full items-center justify-center rounded-[16px] bg-[#587950] ${className}`}
       onPressOut={() => {
         try {
           if (!disabled) {
@@ -44,12 +40,13 @@ export function PrimaryButton({
       }}
     >
       {showLoading && loading ? <Spinner color={colors.white} /> : null}
-      <Text
-        className={`${disabled ? "text-gray-500" : "text-big_stone"}`}
-        style={{ fontFamily: "Urbanist" }}
-      >
+      <Text className="text-white" style={{ fontFamily: "Urbanist" }}>
         {loading && showLoading ? loadingValue : title}
       </Text>
+      {(disabled ||
+        (loading && showLoading)) && (
+          <View className="absolute top-0 left-0 w-full h-full bg-[#f4f8f98a] rounded-[16px]" />
+        )}
     </TouchableOpacity>
   );
 }
