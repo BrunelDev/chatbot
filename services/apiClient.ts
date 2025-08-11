@@ -3,7 +3,7 @@ import axios, { isAxiosError } from "axios";
 import { AuthResponse } from "./accountService";
 const apiClient = axios.create({
   //baseURL: process.env.COMMODORE_API_BASE_URL,
-  baseURL: "http://192.168.100.98:8000/api/",
+  baseURL: "http://192.168.100.3:8000/api/",
   headers: {
     "Content-Type": "application/json",
     Accept: "application/json",

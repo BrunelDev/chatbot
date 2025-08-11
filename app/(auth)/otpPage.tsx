@@ -49,9 +49,14 @@ export default function OtpPage() {
     } else if (source === "password_reset") {
       // Navigate to a new page to set the new password
       // The actual API call to verify/reset password will happen on that new page
+
       try {
+        const response = await accountService.verifyEmail({
+          email: effectiveEmail,
+          code,
+        });
         router.push({
-          pathname: "/(auth)/login",
+          pathname: "/(auth)/changePassword",
           params: { email: effectiveEmail, code },
         });
       } catch (error) {
@@ -128,8 +133,8 @@ export default function OtpPage() {
             onFocus={() => console.log("Focused")}
             onBlur={() => console.log("Blurred")}
             onTextChange={(text) => console.log(text)}
-            onFilled={(text) => {
-              handleOtpSubmission(text);
+            onFilled={async (text) => {
+              await handleOtpSubmission(text);
             }}
             textInputProps={{
               accessibilityLabel: "One-Time Password",

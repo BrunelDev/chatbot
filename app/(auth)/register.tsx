@@ -1,6 +1,7 @@
 "use client";
 
 import { PrimaryButton } from "@/components/buttons/primaryButton";
+import { GoBack } from "@/components/headers/goBack";
 import accountService from "@/services/accountService";
 import { router } from "expo-router";
 import { ArrowLeft, Eye, EyeOff, Lock, Mail, User } from "lucide-react-native";
@@ -30,6 +31,7 @@ export default function AuthScreen() {
     try {
       const response = await accountService.register({
         email,
+        name : username,
         password,
         password_confirm: password,
       });
@@ -41,7 +43,6 @@ export default function AuthScreen() {
     }
   };
 
-  const handleBack = () => {};
 
   const togglePasswordVisibility = () => {
     setShowPassword(!showPassword);
@@ -55,11 +56,8 @@ export default function AuthScreen() {
           style={styles.keyboardView}
         >
           {/* Header */}
-          <View style={styles.header}>
-            <TouchableOpacity onPress={handleBack} style={styles.backButton}>
-              <ArrowLeft size={24} color="#333" />
-            </TouchableOpacity>
-            <View style={styles.placeholder} />
+          <View className="px-4">
+          <GoBack />
           </View>
 
           {/* Content */}

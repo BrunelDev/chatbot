@@ -19,6 +19,7 @@ import { router } from "expo-router";
 import { ArrowLeft, Eye, EyeOff, Lock, Mail } from 'lucide-react-native';
 import { PrimaryButton } from "@/components/buttons/primaryButton";
 import { GoBack } from "@/components/headers/goBack";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const { width, height } = Dimensions.get("window");
 
@@ -36,6 +37,8 @@ export default function AuthScreen() {
   const handleLogin = async () => {
     try {
       const response = await accountService.login({ email, password });
+      AsyncStorage.setItem("userInfo", JSON.stringify(response));
+      router.push("/(tabs)/home");
       console.log(response);
     } catch (error) {
       console.error('Login failed:', error);
@@ -51,7 +54,9 @@ export default function AuthScreen() {
           style={styles.keyboardView}
         >
           {/* Header */}
-          <GoBack />
+          <View className="px-4">
+            <GoBack />
+          </View>
 
           {/* Content */}
           <View style={styles.content}>

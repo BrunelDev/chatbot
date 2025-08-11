@@ -1,5 +1,4 @@
-import { Image, ImageBackground } from "expo-image";
-import { LinearGradient } from "expo-linear-gradient";
+import { ImageBackground } from "expo-image";
 import {
   ImageSourcePropType,
   Text,
@@ -18,33 +17,32 @@ export function Onboarding({
 }) {
   const { width, height } = useWindowDimensions();
   return (
-    <View className="relative rounded-br-full overflow-hidden">
-    <ImageBackground
-      source={onboardingProps.image}
-      contentFit="cover"
-      style={{ width, height }}
-      className="relative"
-    >
-      <Image
+    <View className="relative">
+      <ImageBackground
+        source={onboardingProps.image}
         contentFit="cover"
-        style={{ height: 540, width }}
-        alt="onboarding image"
-        className="bg-red-600 p-2 h-fit"
-      />
-      
+        style={{ width, height }}
+        className="relative"
+      >
+        <View className="absolute top-0 left-0 right-0 bottom-0 bg-black opacity-30" />
 
-      <View className="flex gap-8 px-2 mt-4">
-        <Text
-          className="text-[#FFFDC2]  text-[30px]"
-          style={{ fontFamily: "Gt_Super", fontWeight: 100 }}
+        <View
+          className="flex gap-8 pl-4 pr-5"
+          style={{
+            marginTop: 420,
+          }}
         >
-          {onboardingProps.title}
-        </Text>
-        <Text className="text-[#F4F8F9] font-urbanist">
-          {onboardingProps.description}
-        </Text>
-      </View>
-    </ImageBackground>
+          <Text
+            className="text-[#FFFDC2]  text-[30px]"
+            style={{ fontFamily: "Gt_Walsheim", fontWeight: 500 }}
+          >
+            {onboardingProps.title}
+          </Text>
+          <Text className="text-[#F4F8F9] font-work ">
+            {onboardingProps.description}
+          </Text>
+        </View>
+      </ImageBackground>
     </View>
   );
 }

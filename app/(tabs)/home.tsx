@@ -11,10 +11,10 @@ export default function HomeScreen() {
       await AsyncStorage.removeItem("accessToken");
       await AsyncStorage.removeItem("refreshToken");
       router.replace("/(auth)/login");
-      Alert.alert("Logout", "You have been logged out successfully.");
+      Alert.alert("Déconnexion", "Vous avez été déconnecté avec succès.");
     } catch (error) {
       console.error("Failed to logout:", error);
-      Alert.alert("Error", "Failed to logout. Please try again.");
+      Alert.alert("Erreur", "Une erreur est survenue lors de la déconnexion. Veuillez réessayer.");
     }
   };
 
@@ -51,15 +51,15 @@ export default function HomeScreen() {
 
   return (
     <View className="flex-1 justify-center items-center p-5 bg-white">
-      <Text className="text-2xl font-bold mb-5">Home Screen</Text>
+      <Text className="text-2xl font-bold mb-5">Accueil</Text>
       <PrimaryButton
-        title="Logout"
+        title="Déconnexion"
         handlePress={handleLogout}
         className="w-full"
       />
       <View className="h-5" />
       <PrimaryButton
-        title="Delete Account"
+        title="Supprimer le compte"
         handlePress={handleDeleteAccount}
         className="w-full"
       />

@@ -25,6 +25,7 @@ export interface AuthResponse {
 
 export interface RegisterPayload {
   email: string;
+  name: string;
   password: string;
   password_confirm: string;
 }
@@ -121,7 +122,7 @@ const accountService = {
   deleteAccount: async (): Promise<{ message: string }> => {
     try {
       const response = await apiClient.delete<{ message: string }>(
-        "/api/auth/delete-account/"
+        "/auth/delete-account/"
       );
       return response.data;
     } catch (error) {

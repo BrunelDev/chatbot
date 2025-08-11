@@ -15,7 +15,7 @@ export default function HomeScreen() {
   const onboardindScreens = [
     {
       image: require("../assets/images/onboarding1.png"),
-      title: "Bienvenue dans Cheveux Texturés",
+      title: "Bienvenue sur Boucles en Poésie",
       description:
         "Un espace pensé pour toi, pour mieux comprendre, soigner et aimer tes cheveux texturés, bouclés ou crépus.Découvre des conseils personnalisés, adaptés à ta vraie nature capillaire.",
     },
@@ -42,6 +42,14 @@ export default function HomeScreen() {
       });
     }
   };
+  const goToPreviousSlide = () => {
+    if (currentIndex > 0) {
+      flatListRef.current?.scrollToIndex({
+        index: currentIndex - 1,
+        animated: true,
+      });
+    }
+  };
   const router = useRouter();
 
   return (
@@ -53,7 +61,7 @@ export default function HomeScreen() {
         horizontal
         style={{ width: width }}
         pagingEnabled
-        className=""
+        className="rounded-br-full overflow-hidden"
         data={onboardindScreens}
         keyExtractor={(item) => item.title}
         renderItem={({ item }) => <Onboarding onboardingProps={item} />}
@@ -77,30 +85,29 @@ export default function HomeScreen() {
         <View className="flex flex-row items-center gap-2">
           <TouchableOpacity
             activeOpacity={0.7}
-            onPress={goToNextSlide}
-            className="bg-[#fffdc29c] flex h-[60px] w-[60px] items-center justify-center rounded-full"
+            onPress={goToPreviousSlide}
+            className={`${currentIndex === 0 ? "bg-[#fffdc29c]" : "bg-[#FFFDC2]"} flex h-[60px] w-[60px] items-center justify-center rounded-full`}
           >
             <ArrowLeft size={20} />
           </TouchableOpacity>
           <TouchableOpacity
             activeOpacity={0.7}
             onPress={goToNextSlide}
-            className="bg-[#FFFDC2] flex h-[60px] w-[60px] items-center justify-center rounded-full"
+            className={`${currentIndex === onboardindScreens.length - 1 ? "bg-[#fffdc29c]" : "bg-[#FFFDC2]"} flex h-[60px] w-[60px] items-center justify-center rounded-full`}
           >
             <ArrowRight size={20} />
           </TouchableOpacity>
         </View>
         <View className="flex w-full flex-row items-center justify-between">
-          <View className="ml-auto">
-            <Text
-              className="text-[#4D5962]"
-              onPress={() => {
-                router.push("/(auth)/login");
-              }}
-            >
-              Passer
-            </Text>
-          </View>
+          <TouchableOpacity
+            activeOpacity={0.7}
+            onPress={() => {
+              router.push("/(auth)/login");
+            }}
+            className="ml-auto"
+          >
+            <Text className="text-[#4D5962]">Passer</Text>
+          </TouchableOpacity>
         </View>
       </View>
     </View>
