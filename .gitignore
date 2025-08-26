@@ -5,6 +5,7 @@ node_modules/
 .expo/
 .expo-shared/
 .expo/
+.expo/
 # macOS
 .DS_Store
 

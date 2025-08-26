@@ -1,43 +1,29 @@
 import { GoBack } from "@/components/headers/goBack";
 import { SubTitle, Title } from "@/components/textComponents/title";
+import { useFormStore } from "@/context/useFormStore";
 import WheelPicker from "@quidone/react-native-wheel-picker";
 import { Image } from "expo-image";
 import { router } from "expo-router";
-import React, { useState } from "react";
+import React from "react";
 import {
   KeyboardAvoidingView,
   Platform,
   SafeAreaView,
   Text,
   TouchableOpacity,
-  useWindowDimensions,
   View,
 } from "react-native";
 
+const hairHeightData = [
+  { value: "Très courts", label: "Très courts" },
+  { value: "Courts", label: "Courts" },
+  { value: "Mi-longs", label: "Mi-longs" },
+  { value: "Longs", label: "Longs" },
+  { value: "Très longs", label: "Très longs" },
+];
+
 export default function FormThree() {
-  const [value, setValue] = useState('');
-  const hairHeight = [
-    {
-      value: "Très courts",
-      label: "Très courts",
-    },
-    {
-      value: "Courts",
-      label: "Courts",
-    },
-    {
-      value: "Mi-longs",
-      label: "Mi-longs",
-    },
-    {
-      value: "Longs",
-      label: "Longs",
-    },
-    {
-      value: "Très longs",
-      label: "Très longs",
-    },
-  ];
+  const { hairHeight, setFormData } = useFormStore();
 
   return (
     <KeyboardAvoidingView
@@ -52,19 +38,19 @@ export default function FormThree() {
           <SubTitle title="Cette question nous permettra d’ adapter les conseils à la longueur (routines, produits, etc.)" />
         </View>
         <WheelPicker
-          data={hairHeight}
-          value={value}
-          onValueChanged={({ item: { value } }) => setValue(value)}
+          data={hairHeightData}
+          value={hairHeight}
+          onValueChanged={({ item: { value } }) =>
+            setFormData({ hairHeight: value })
+          }
           enableScrollByTapOnItem={true}
-        
           itemTextStyle={{
             color: "#121C12",
             fontSize: 16,
             fontWeight: "400",
             lineHeight: 24,
-            paddingVertical: "auto"
+            paddingVertical: "auto",
           }}
-          
         />
 
         {/* Sticky footer button */}
@@ -94,36 +80,3 @@ export default function FormThree() {
     </KeyboardAvoidingView>
   );
 }
-
-const HairType = ({
-  title,
-  value,
-  image,
-}: {
-  title: string;
-  value: string;
-  image: string;
-}) => {
-  const [active, setActive] = useState(false);
-  const { width, height } = useWindowDimensions();
-  return (
-    <TouchableOpacity
-      activeOpacity={0.7}
-      style={{
-        width: width / 2 - 24,
-      }}
-      onPress={() => setActive(!active)}
-      className={`flex flex-col gap-3 items-center justify-between pt-1 pb-3 px-1 rounded-xl ${
-        active ? "bg-envy-200" : "bg-envy-100"
-      }`}
-    >
-      <Image source={image} style={{ width: "100%", height: 170 }} />
-      <Text
-        style={{ flexBasis: "auto" }}
-        className="font-medium text-envy-950 text-sm"
-      >
-        {title}
-      </Text>
-    </TouchableOpacity>
-  );
-};

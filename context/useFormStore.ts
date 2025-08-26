@@ -1,48 +1,42 @@
 import { create } from "zustand";
+import { persist, createJSONStorage } from "zustand/middleware";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
-interface FormOneStoreProps {
+interface FormState {
   goals: string[];
-  setGoals: (goals: string[]) => void;
-}
-interface FormTwoStoreProps {
   hairType: string;
-  setHairType: (hairType: string) => void;
-}
-interface FormThreeStoreProps {
   hairHeight: string;
-  setHairHeight: (hairHeight: string) => void;
-}
-interface FormFourStoreProps {
   hairProblems: string[];
-  setHairProblems: (hairProblems: string[]) => void;
-}
-interface FormFiveStoreProps {
   routineFrequency: string;
-  setRoutineFrequency: (routineFrequency: string) => void;
+  scalpConditions: string[];
+  notes: string;
 }
 
+interface FormStore extends FormState {
+  setFormData: (data: Partial<FormState>) => void;
+  resetForm: () => void;
+}
 
-export const useFormOneStore = create<FormOneStoreProps>((set) => ({
+const initialState: FormState = {
   goals: [],
-  setGoals: (goals: string[]) => set({ goals }),
-}));
-
-export const useFormTwoStore = create<FormTwoStoreProps>((set) => ({
   hairType: "",
-  setHairType: (hairType: string) => set({ hairType }),
-}));
-
-export const useFormThreeStore = create<FormThreeStoreProps>((set) => ({
   hairHeight: "",
-  setHairHeight: (hairHeight: string) => set({ hairHeight }),
-}));
-
-export const useFormFourStore = create<FormFourStoreProps>((set) => ({
   hairProblems: [],
-  setHairProblems: (hairProblems: string[]) => set({ hairProblems }),
-}));
-
-export const useFormFiveStore = create<FormFiveStoreProps>((set) => ({
   routineFrequency: "",
-  setRoutineFrequency: (routineFrequency: string) => set({ routineFrequency }),
-}));
+  scalpConditions: [],
+  notes: "",
+};
+
+export const useFormStore = create<FormStore>()(
+  persist(
+    (set) => ({
+      ...initialState,
+      setFormData: (data) => set((state) => ({ ...state, ...data })),
+      resetForm: () => set(initialState),
+    }),
+    {
+      name: "form-storage", // unique name
+      storage: createJSONStorage(() => AsyncStorage), // (optional) by default, 'localStorage' is used
+    }
+  )
+);

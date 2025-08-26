@@ -1,36 +1,63 @@
 import { GoBack } from "@/components/headers/goBack";
 import { SubTitle, Title } from "@/components/textComponents/title";
+import { useFormStore } from "@/context/useFormStore";
+import profileService from "@/services/profile";
 import WheelPicker from "@quidone/react-native-wheel-picker";
 import { Image } from "expo-image";
 import { router } from "expo-router";
-import React, { useState } from "react";
+import React from "react";
 import {
+  Alert,
   KeyboardAvoidingView,
   Platform,
   SafeAreaView,
   Text,
   TouchableOpacity,
-  useWindowDimensions,
   View,
 } from "react-native";
-import profileService from "@/services/profile";
 
-export default function FormThree() {
-  const [value, setValue] = useState("");
-  const hairHeight = [
-    {
-      value: "Oui j'ai une routine bien définie",
-      label: "Oui, j'ai une routine bien définie",
-    },
-    {
-      value: "Non j'ai pas de routine",
-      label: "J’en ai une mais je ne suis pas régulière",
-    },
-    {
-      value: "Non, je débute",
-      label: "Non, je débute",
-    },
-  ];
+const routineFrequencyData = [
+  {
+    value: "Oui, j'ai une routine bien définie",
+    label: "Oui, j'ai une routine bien définie",
+  },
+  {
+    value: "J’en ai une mais je ne suis pas régulière",
+    label: "J’en ai une mais je ne suis pas régulière",
+  },
+  { value: "Non, je débute", label: "Non, je débute" },
+];
+
+export default function FormFive() {
+  const {
+    goals,
+    hairType,
+    hairHeight,
+    hairProblems,
+    routineFrequency,
+    scalpConditions,
+    notes,
+    setFormData,
+    resetForm,
+  } = useFormStore();
+
+  const handleSubmit = async () => {
+    try {
+      await profileService.createHairProfile({
+        hair_type: hairType,
+        hair_height: hairHeight,
+        objectives: goals,
+        specific_problems: hairProblems,
+        routine_frequency: routineFrequency,
+      });
+      Alert.alert("Succès", "Votre profil capillaire a été créé avec succès.");
+      resetForm();
+      router.replace("/(tabs)/home");
+    } catch (error) {
+      console.error(error);
+      Alert.alert("Erreur", "Une erreur est survenue lors de la création de votre profil.");
+    }
+  };
 
   return (
     <KeyboardAvoidingView
@@ -41,13 +68,15 @@ export default function FormThree() {
         <SafeAreaView />
         <GoBack />
         <View className="flex flex-col gap-y-4" style={{ marginBottom: 16 }}>
-          <Title title="Quelle est la longueur de vos cheveux ?" />
-          <SubTitle title="Cette question nous permettra d’ adapter les conseils à la longueur (routines, produits, etc.)" />
+          <Title title="Avez-vous une routine capillaire ?" />
+          <SubTitle title="Cette information nous aide à comprendre votre niveau d’expérience et vos habitudes." />
         </View>
         <WheelPicker
-          data={hairHeight}
-          value={value}
-          onValueChanged={({ item: { value } }) => setValue(value)}
+          data={routineFrequencyData}
+          value={routineFrequency}
+          onValueChanged={({ item: { value } }) =>
+            setFormData({ routineFrequency: value })
+          }
           enableScrollByTapOnItem={true}
           itemTextStyle={{
             color: "#121C12",
@@ -69,9 +98,7 @@ export default function FormThree() {
             <Text className="text-[#4D5962] font-medium">Passer</Text>
           </TouchableOpacity>
           <TouchableOpacity
-            onPress={() => {
-              router.push("/(tabs)/home");
-            }}
+            onPress={handleSubmit}
             className="flex flex-row  justify-center items-center bg-candlelight-500 rounded-full"
             style={{ width: 44, height: 44 }}
           >

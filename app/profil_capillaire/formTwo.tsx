@@ -1,8 +1,9 @@
 import { GoBack } from "@/components/headers/goBack";
 import { SubTitle, Title } from "@/components/textComponents/title";
+import { useFormStore } from "@/context/useFormStore";
 import { Image } from "expo-image";
 import { router } from "expo-router";
-import React, { useMemo, useState } from "react";
+import React from "react";
 import {
   KeyboardAvoidingView,
   Platform,
@@ -13,103 +14,35 @@ import {
   View,
 } from "react-native";
 
-type Option = {
-  key: string;
-  label: string;
-};
-
-const HAIR_TYPES: Option[] = [
-  { key: "dry", label: "Sec" },
-  { key: "oily", label: "Gras" },
-  { key: "normal", label: "Normal" },
-  { key: "combination", label: "Mixte" },
-];
-
-const SCALP_CONDITIONS: Option[] = [
-  { key: "dandruff", label: "Pellicules" },
-  { key: "itchy", label: "Démangeaisons" },
-  { key: "sensitive", label: "Sensible" },
-  { key: "normal", label: "Normal" },
-];
-
-const HAIR_GOALS: Option[] = [
-  { key: "growth", label: "Pousse" },
-  { key: "strength", label: "Force" },
-  { key: "shine", label: "Brillance" },
-  { key: "volume", label: "Volume" },
-  { key: "hydrate", label: "Hydratation" },
-];
-
-const ROUTINE_FREQ: Option[] = [
-  { key: "daily", label: "Quotidienne" },
-  { key: "2-3week", label: "2-3x/sem" },
-  { key: "weekly", label: "Hebdo" },
-  { key: "biweekly", label: "Bi-hebdo" },
+const hairTypesData = [
+  {
+    title: "Cheveux lisses",
+    value: "Lisse",
+    image: require("../../assets/images/cheveux_lisses.png"),
+  },
+  {
+    title: "Cheveux ondulés",
+    value: "Ondulé",
+    image: require("../../assets/images/cheveux_ondules.png"),
+  },
+  {
+    title: "Cheveux bouclés",
+    value: "Bouclé",
+    image: require("../../assets/images/cheveux_boucles.png"),
+  },
+  {
+    title: "Cheveux frisés à crépus",
+    value: "Crépu",
+    image: require("../../assets/images/cheveux_crepus.png"),
+  },
 ];
 
 export default function FormTwo() {
-  const [hairType, setHairType] = useState<string | null>(null);
-  const [scalpConditions, setScalpConditions] = useState<string[]>([]);
-  const [hairGoals, setHairGoals] = useState<string[]>([]);
-  const [routineFrequency, setRoutineFrequency] = useState<string | null>(null);
-  const [notes, setNotes] = useState<string>("");
+  const { hairType, setFormData } = useFormStore();
 
-  const toggleMulti = (
-    list: string[],
-    key: string,
-    setter: (v: string[]) => void
-  ) => {
-    if (list.includes(key)) {
-      setter(list.filter((k) => k !== key));
-    } else {
-      setter([...list, key]);
-    }
+  const handleSelectHairType = (value: string) => {
+    setFormData({ hairType: value });
   };
-
-  const isValid = useMemo(
-    () => !!hairType && !!routineFrequency,
-    [hairType, routineFrequency]
-  );
-
-  const Chip = ({
-    active,
-    children,
-  }: {
-    active: boolean;
-    children: React.ReactNode;
-  }) => (
-    <View
-      className={`px-4 py-2 rounded-full border ${
-        active ? "bg-[#5879501A] border-[#587950]" : "border-gray-300"
-      }`}
-    >
-      <Text className={`${active ? "text-[#587950]" : "text-black"}`}>
-        {children}
-      </Text>
-    </View>
-  );
-  const hairTypes = [
-    {
-      title: "Cheveux lisses",
-      value: "Pousse",
-      image: require("../../assets/images/cheveux_lisses.png"),
-    },
-    {
-      title: "Cheveux ondulés",
-      value: "Force",
-      image: require("../../assets/images/cheveux_ondules.png"),
-    },
-    {
-      title: "Cheveux bouclés",
-      value: "Brillance",
-      image: require("../../assets/images/cheveux_boucles.png"),
-    },
-    {
-      title: "Cheveux frisés à crépus",
-      value: "Volume",
-      image: require("../../assets/images/cheveux_crepus.png"),
-    },
-  ];
 
   return (
     <KeyboardAvoidingView
@@ -119,16 +52,19 @@ export default function FormTwo() {
       <View className="flex-1 bg-candlelight-50 px-4">
         <SafeAreaView />
         <GoBack />
-        <View className="flex flex-col gap-y-4" style={{marginBottom: 16}}>
+        <View className="flex flex-col gap-y-4" style={{ marginBottom: 16 }}>
           <Title title="Quel est votre type de cheveux ?" />
           <SubTitle title="Cette question nous permettra d’ identifier la texture principale pour personnaliser les conseils." />
         </View>
         <View className="flex flex-row flex-wrap gap-y-4 gap-x-4">
-          {hairTypes.map((hairType) => (
+          {hairTypesData.map((type) => (
             <HairType
-              title={hairType.title}
-              value={hairType.value}
-              image={hairType.image}
+              key={type.value}
+              title={type.title}
+              value={type.value}
+              image={type.image}
+              active={hairType === type.value}
+              onPress={handleSelectHairType}
             />
           ))}
         </View>
@@ -165,24 +101,32 @@ const HairType = ({
   title,
   value,
   image,
+  active,
+  onPress,
 }: {
   title: string;
   value: string;
-  image: string;
+  image: any;
+  active: boolean;
+  onPress: (value: string) => void;
 }) => {
-  const [active, setActive] = useState(false);
-  const { width, height } = useWindowDimensions();
+  const { width } = useWindowDimensions();
   return (
     <TouchableOpacity
       activeOpacity={0.7}
       style={{
-        width: width/2 -24,
+        width: width / 2 - 24,
       }}
-      onPress={() => setActive(!active)}
-      className={`flex flex-col gap-3 items-center justify-between pt-1 pb-3 px-1 rounded-xl ${active ? "bg-envy-200" : "bg-envy-100"}`}
+      onPress={() => onPress(value)}
+      className={`flex flex-col gap-3 items-center justify-between pt-1 pb-3 px-1 rounded-xl ${
+        active ? "bg-envy-200" : "bg-envy-100"
+      }`}
     >
       <Image source={image} style={{ width: "100%", height: 170 }} />
-      <Text style={{ flexBasis: "auto" }} className="font-medium text-envy-950 text-sm">
+      <Text
+        style={{ flexBasis: "auto" }}
+        className="font-medium text-envy-950 text-sm"
+      >
         {title}
       </Text>
     </TouchableOpacity>
