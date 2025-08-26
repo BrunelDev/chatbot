@@ -40,8 +40,11 @@ export default function HomeScreen() {
         index: currentIndex + 1,
         animated: true,
       });
+    } else if (currentIndex === 2) {
+      router.push("/(auth)/login");
     }
   };
+
   const goToPreviousSlide = () => {
     if (currentIndex > 0) {
       flatListRef.current?.scrollToIndex({
@@ -71,8 +74,8 @@ export default function HomeScreen() {
         }}
         showsHorizontalScrollIndicator={false}
       />
-      <View className="absolute bottom-10 px-4">
-        <View className="absolute bottom-28 w-24 flex-row justify-center gap-2">
+      <View className="absolute bottom-[110px] px-4 pt-6">
+        <View className="absolute bottom-28 pl-5 w-24 flex-row justify-center gap-2">
           {onboardindScreens.map((_, index) => (
             <View
               key={index}
@@ -82,27 +85,33 @@ export default function HomeScreen() {
             />
           ))}
         </View>
-        <View className="flex flex-row items-center gap-2">
+      </View>
+      <View className="absolute bottom-[90px] px-4 pt-6">
+        <View className="flex flex-row items-center gap-2 pt-14">
           <TouchableOpacity
             activeOpacity={0.7}
             onPress={goToPreviousSlide}
-            className={`${currentIndex === 0 ? "bg-[#fffdc29c]" : "bg-[#FFFDC2]"} flex h-[60px] w-[60px] items-center justify-center rounded-full`}
+            className={`${
+              currentIndex === 0 ? "bg-[#fffdc29c]" : "bg-[#FFFDC2]"
+            } flex h-[60px] w-[60px] items-center justify-center rounded-full`}
           >
             <ArrowLeft size={20} />
           </TouchableOpacity>
           <TouchableOpacity
             activeOpacity={0.7}
             onPress={goToNextSlide}
-            className={`${currentIndex === onboardindScreens.length - 1 ? "bg-[#fffdc29c]" : "bg-[#FFFDC2]"} flex h-[60px] w-[60px] items-center justify-center rounded-full`}
+            className={`flex h-[60px] w-[60px] items-center justify-center rounded-full bg-[#FFFDC2]`}
           >
             <ArrowRight size={20} />
           </TouchableOpacity>
         </View>
+      </View>
+      <View className="absolute bottom-[50px] px-4 pt-6">
         <View className="flex w-full flex-row items-center justify-between">
           <TouchableOpacity
             activeOpacity={0.7}
             onPress={() => {
-              router.push("/(auth)/login");
+              router.push("/(tabs)/home");
             }}
             className="ml-auto"
           >

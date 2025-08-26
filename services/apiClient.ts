@@ -2,8 +2,8 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import axios, { isAxiosError } from "axios";
 import { AuthResponse } from "./accountService";
 const apiClient = axios.create({
-  //baseURL: process.env.COMMODORE_API_BASE_URL,
-  baseURL: "http://192.168.100.3:8000/api/",
+  //baseURL: process.env.EXPO_PUBLIC_API_URL,
+  baseURL: process.env.EXPO_PUBLIC_API_URL,
   headers: {
     "Content-Type": "application/json",
     Accept: "application/json",
@@ -59,7 +59,7 @@ apiClient.interceptors.response.use(
 
         // Request a new access token using the refresh token
         const { data } = await axios.post(
-          `${"http://192.168.100.98:8000/api/"}token/refresh/`,
+          `${process.env.EXPO_PUBLIC_API_URL}/auth/token/refresh/`,
           {
             refresh: refresh,
           }
@@ -113,11 +113,35 @@ export const handleApiError = (
       data: error.response.data,
       headers: error.response.headers,
     });
-    // Extract a message from the API response if available, otherwise use the custom one
-    const apiErrorMessage =
-      error.response.data?.message ||
-      error.response.data?.detail ||
-      customMessage;
+
+    // Extract error message with priority order
+    let apiErrorMessage = customMessage;
+
+    // First check for top-level message or detail
+    if (error.response.data?.message) {
+      apiErrorMessage = error.response.data.message;
+    } else if (error.response.data?.detail) {
+      apiErrorMessage = error.response.data.detail;
+    } else if (error.response.data?.data) {
+      // Handle field-specific errors like {"data": {"email": ["Error message"]}}
+      const fieldErrors = error.response.data.data;
+      const errorMessages: string[] = [];
+
+      // Extract all field error messages
+      Object.keys(fieldErrors).forEach((field) => {
+        const fieldErrorArray = fieldErrors[field];
+        if (Array.isArray(fieldErrorArray)) {
+          errorMessages.push(...fieldErrorArray);
+        } else if (typeof fieldErrorArray === "string") {
+          errorMessages.push(fieldErrorArray);
+        }
+      });
+
+      if (errorMessages.length > 0) {
+        apiErrorMessage = errorMessages.join(". ");
+      }
+    }
+
     return new Error(apiErrorMessage);
   }
   // Handle network errors or other unexpected errors

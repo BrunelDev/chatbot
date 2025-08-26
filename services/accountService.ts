@@ -126,7 +126,10 @@ const accountService = {
       );
       return response.data;
     } catch (error) {
-      throw handleApiError(error, "An error occurred while deleting the account.");
+      throw handleApiError(
+        error,
+        "An error occurred while deleting the account."
+      );
     }
   },
   register: async (payload: RegisterPayload): Promise<RegisterResponse> => {
@@ -134,12 +137,20 @@ const accountService = {
       console.log(payload);
       const { data } = await apiClient.post<RegisterResponse>(
         "/auth/register/",
-        payload
+        {
+          ...payload,
+        },
+        {
+          headers: {
+            // No Authorization header for registration
+            Authorization: undefined,
+          },
+        }
       );
 
       return data;
     } catch (error) {
-      throw handleApiError(error, "Registration failed.");
+      throw error;
     }
   },
 
@@ -173,7 +184,13 @@ const accountService = {
     try {
       const { data } = await apiClient.post<AuthResponse>(
         "/auth/login/",
-        payload
+        payload,
+        {
+          headers: {
+            // No Authorization header for registration
+            Authorization: undefined,
+          },
+        }
       );
       return data;
     } catch (error) {
@@ -199,6 +216,7 @@ const accountService = {
     payload: PasswordResetRequestPayload
   ): Promise<PasswordResetRequestResponse> => {
     try {
+      console.log(process.env.EXPO_PUBLIC_API_URL);
       const { data } = await apiClient.post<PasswordResetRequestResponse>(
         "/auth/password-reset/request/",
         payload
@@ -243,8 +261,9 @@ const accountService = {
 
   getActivities: async (): Promise<UserActivitiesResponse> => {
     try {
-      const { data } =
-        await apiClient.get<UserActivitiesResponse>("/auth/activities/");
+      const { data } = await apiClient.get<UserActivitiesResponse>(
+        "/auth/activities/"
+      );
       return data;
     } catch (error) {
       throw handleApiError(error, "Failed to fetch activities.");

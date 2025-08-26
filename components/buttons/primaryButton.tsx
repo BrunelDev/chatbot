@@ -24,7 +24,8 @@ export function PrimaryButton({
   return (
     <TouchableOpacity
       activeOpacity={disabled ? 1 : activeOpacity}
-      className={`relative flex flex-row gap-3 h-[48px] w-full items-center justify-center rounded-[16px] bg-[#587950] ${className}`}
+      className={`relative flex flex-row gap-3 w-full items-center justify-center bg-[#587950] ${className}`}
+      style={{ borderRadius: 12 , height: 52}}
       onPressOut={() => {
         try {
           if (!disabled) {
@@ -40,12 +41,12 @@ export function PrimaryButton({
       }}
     >
       {showLoading && loading ? <Spinner color={colors.white} /> : null}
-      <Text className="text-white" style={{ fontFamily: "Urbanist" }}>
+      <Text className="text-[#F4F8F9] font-medium text-sm" style={{ fontFamily: "Urbanist" }}>
         {loading && showLoading ? loadingValue : title}
       </Text>
       {(disabled ||
         (loading && showLoading)) && (
-          <View className="absolute top-0 left-0 w-full h-full bg-[#f4f8f98a] rounded-[16px]" />
+          <View className="absolute top-0 left-0 w-full h-full bg-[#f4f8f98a] rounded-[12px]" />
         )}
     </TouchableOpacity>
   );

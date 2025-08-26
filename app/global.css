@@ -1,6 +1,75 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+
+/* Design tokens mapped to Tailwind rgb(var(--token)/<alpha-value>) pattern */
+:root {
+  /* Primary (green) - #587950 */
+  --color-primary-0: 88 121 80;
+  --color-primary-50: 88 121 80;
+  --color-primary-100: 88 121 80;
+  --color-primary-200: 88 121 80;
+  --color-primary-300: 88 121 80;
+  --color-primary-400: 88 121 80;
+  --color-primary-500: 88 121 80;
+  --color-primary-600: 78 107 72;
+  --color-primary-700: 67 92 62;
+  --color-primary-800: 56 77 52;
+  --color-primary-900: 45 62 42;
+  --color-primary-950: 35 48 33;
+
+  /* Secondary (amber) - #A46C04 */
+  --color-secondary-0: 164 108 4;
+  --color-secondary-50: 250 232 197;
+  --color-secondary-100: 246 213 153;
+  --color-secondary-200: 240 189 101;
+  --color-secondary-300: 232 160 50;
+  --color-secondary-400: 214 134 9;
+  --color-secondary-500: 164 108 4;
+  --color-secondary-600: 133 86 4;
+  --color-secondary-700: 103 67 5;
+  --color-secondary-800: 77 50 6;
+  --color-secondary-900: 56 36 6;
+  --color-secondary-950: 38 24 4;
+
+  /* Typography */
+  --color-typography-0: 24 23 24; /* near black */
+  --color-typography-50: 24 23 24;
+  --color-typography-100: 24 23 24;
+  --color-typography-200: 24 23 24;
+  --color-typography-300: 24 23 24;
+  --color-typography-400: 24 23 24;
+  --color-typography-500: 24 23 24;
+  --color-typography-600: 24 23 24;
+  --color-typography-700: 24 23 24;
+  --color-typography-800: 24 23 24;
+  --color-typography-900: 24 23 24;
+  --color-typography-950: 24 23 24;
+  --color-typography-white: 255 255 255;
+  --color-typography-gray: 212 212 212; /* #D4D4D4 */
+  --color-typography-black: 24 23 24; /* #181718 */
+
+  /* Backgrounds */
+  --color-background-0: 252 248 232; /* #FCF8E8 */
+  --color-background-50: 252 248 232;
+  --color-background-100: 252 248 232;
+  --color-background-200: 252 248 232;
+  --color-background-300: 252 248 232;
+  --color-background-400: 252 248 232;
+  --color-background-500: 252 248 232;
+  --color-background-600: 248 244 228;
+  --color-background-700: 244 240 224;
+  --color-background-800: 240 236 220;
+  --color-background-900: 236 232 216;
+  --color-background-950: 232 228 212;
+  --color-background-error: 254 226 226; /* light red bg */
+  --color-background-warning: 254 249 195; /* light yellow */
+  --color-background-muted: 243 244 246; /* gray-100 */
+  --color-background-success: 220 252 231; /* green-100 */
+  --color-background-info: 219 234 254; /* blue-100 */
+
+  /* Indicators (optional) */
+  --color-indicator-primary: 88 121 80;
+  --color-indicator-info: 59 130 246; /* blue-500 */
+  --color-indicator-error: 239 68 68; /* red-500 */
+}

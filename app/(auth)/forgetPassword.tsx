@@ -41,12 +41,13 @@ export default function ForgotPassword() {
     <KeyboardAvoidingView
       behavior={Platform.OS === "ios" ? "padding" : "height"}
       style={{ flex: 1 }}
+      className="bg-[#FEFDE8]"
     >
       <SafeAreaView className="flex-1">
         <GoBack />
         <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
           <View className="flex-1 justify-center px-4 gap-y-10">
-            <Text className="text-big_stone font-black text-4xl">
+            <Text className="text-[#88540B] font-medium text-4xl">
               Mot de passe oublié
             </Text>
             <Text>
@@ -58,7 +59,7 @@ export default function ForgotPassword() {
                 placeholderTextColor={"#02244099"}
                 cursorColor={"#FF9432"}
                 className="bg-[#E5EAE1] h-20 rounded-xl pl-12 pr-4 placeholder:font-urbanist"
-                placeholder="*****jns@gmail.com"
+                placeholder="Votre email"
                 keyboardType="email-address"
                 textContentType="emailAddress"
                 autoComplete="email"

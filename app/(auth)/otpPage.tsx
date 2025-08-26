@@ -104,11 +104,11 @@ export default function OtpPage() {
       style={{ flex: 1 }}
     >
       <TouchableWithoutFeedback onPress={() => Keyboard.dismiss()}>
-        <View className="bg-international_orange-50 w-full h-full justify-center px-4 gap-y-10 relative">
+        <View className="bg-[#FCF8E8] w-full h-full justify-center px-4 gap-y-10 relative">
           <GoBack />
           <SafeAreaView />
 
-          <Text className="text-big_stone font-black text-4xl">
+          <Text className="text-[#88540B] font-medium text-4xl">
             Code de vérification
           </Text>
           <Text>
@@ -151,7 +151,7 @@ export default function OtpPage() {
               Vous n&apos;avez pas de code ?
             </Text>
             <Text
-              className="text-international_orange-600"
+              className="text-[#A46C04]"
               onPress={async () => {
                 if (!effectiveEmail) {
                   Alert.alert(
@@ -171,7 +171,7 @@ export default function OtpPage() {
                 }
               }}
             >
-              Renvoyer
+              Renvoyer le code
             </Text>
           </View>
         </View>

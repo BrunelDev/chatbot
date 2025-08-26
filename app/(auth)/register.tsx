@@ -4,7 +4,7 @@ import { PrimaryButton } from "@/components/buttons/primaryButton";
 import { GoBack } from "@/components/headers/goBack";
 import accountService from "@/services/accountService";
 import { router } from "expo-router";
-import { ArrowLeft, Eye, EyeOff, Lock, Mail, User } from "lucide-react-native";
+import { Eye, EyeOff, Lock, Mail, User } from "lucide-react-native";
 import React, { useState } from "react";
 import {
   Alert,
@@ -25,24 +25,26 @@ export default function AuthScreen() {
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
+  const [showPassword, setShowPassword] = useState(true);
 
   const handleRegister = async () => {
     try {
       const response = await accountService.register({
         email,
-        name : username,
+        name: username,
         password,
         password_confirm: password,
       });
-      router.push({pathname: "/otpPage", params : {source : "email_verification", email : email}});
+      router.push({
+        pathname: "/otpPage",
+        params: { source: "email_verification", email: email },
+      });
       console.log(response);
     } catch (error) {
       console.log(error);
-      Alert.alert("Erreur", error.response.data);
+      Alert.alert("Erreur", "Une erreur est survenue lors de l'inscription.");
     }
   };
-
 
   const togglePasswordVisibility = () => {
     setShowPassword(!showPassword);
@@ -57,13 +59,13 @@ export default function AuthScreen() {
         >
           {/* Header */}
           <View className="px-4">
-          <GoBack />
+            <GoBack />
           </View>
 
           {/* Content */}
           <View style={styles.content}>
             <View style={styles.formContainer}>
-              <Text style={styles.title} className="text-[#88540B]">
+              <Text style={styles.title} className="text-[#88540B] font-medium">
                 Inscrivez-vous!
               </Text>
               <Text style={styles.subtitle}>
@@ -75,7 +77,7 @@ export default function AuthScreen() {
                 {/* Nom Input */}
                 <View style={styles.inputContainer}>
                   <View style={styles.inputWrapper}>
-                    <User style={styles.inputIcon} size={18} color="#999" />
+                    <User size={18} color="#999" />
                     <TextInput
                       style={styles.input}
                       className="pl-1"
@@ -145,7 +147,7 @@ export default function AuthScreen() {
                 {/* Sign Up Link */}
                 <View style={styles.signupContainer}>
                   <Text style={styles.signupText}>
-                    Vous avez déjà un compte!
+                    Vous avez déjà un compte ?{" "}
                   </Text>
                   <TouchableOpacity
                     onPress={() => {
@@ -288,5 +290,6 @@ const styles = StyleSheet.create({
   },
   signupLink: {
     fontSize: 14,
+    color: "#A46C04",
   },
 });

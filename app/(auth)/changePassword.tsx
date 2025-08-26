@@ -18,14 +18,13 @@ import {
 } from "react-native";
 
 import { PrimaryButton } from "@/components/buttons/primaryButton";
-import { useLocalSearchParams } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import { ArrowLeft, Eye, EyeOff, Lock } from "lucide-react-native";
 
 const { width, height } = Dimensions.get("window");
 
 export default function AuthScreen() {
-  const { code } = useLocalSearchParams();
-  const [email, setEmail] = useState("");
+  const { code, email } = useLocalSearchParams();
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -43,13 +42,32 @@ export default function AuthScreen() {
 
   const handleForgetPassword = async () => {
     try {
-      const response = await accountService.confirmPasswordReset({
+      console.log({
         email,
         code: code as string,
-        new_password : password,
-        new_password_confirm : confirmPassword,
+        new_password: password,
+        new_password_confirm: confirmPassword,
+      });
+      const response = await accountService.confirmPasswordReset({
+        email: email as string,
+        code: code as string,
+        new_password: password,
+        new_password_confirm: confirmPassword,
       });
       console.log(response);
+      Alert.alert(
+        "Mot de passe réinitialisé avec succès !",
+        "Vous pouvez maintenant vous connecter.",
+        [
+          {
+            text: "OK",
+            onPress: () => {
+              router.push("/(auth)/passwordUpdated");
+            },
+            style: "cancel",
+          },
+        ]
+      );
     } catch (error) {
       Alert.alert("Erreur", "Une erreur est survenue lors de la connexion.");
     }
@@ -74,7 +92,7 @@ export default function AuthScreen() {
             {/* Content */}
             <View style={styles.content}>
               <View style={styles.formContainer}>
-                <Text style={styles.title} className="text-[#88540B]">
+                <Text style={styles.title} className="text-[#88540B] font-medium">
                   Changer de mot de passe
                 </Text>
                 <Text style={styles.subtitle}>
@@ -116,15 +134,15 @@ export default function AuthScreen() {
                         style={styles.input}
                         placeholder="Confirmer le mot de passe"
                         placeholderTextColor="#999"
-                        value={password}
-                        onChangeText={setPassword}
-                        secureTextEntry={!showPassword}
+                        value={confirmPassword}
+                        onChangeText={setConfirmPassword}
+                        secureTextEntry={!showConfirmPassword}
                       />
                       <TouchableOpacity
-                        onPress={togglePasswordVisibility}
+                        onPress={toggleConfirmPasswordVisibility}
                         style={styles.eyeIcon}
                       >
-                        {showPassword ? (
+                        {showConfirmPassword ? (
                           <EyeOff color="#333" size={18} />
                         ) : (
                           <Eye color="#333" size={18} />
@@ -142,7 +160,7 @@ export default function AuthScreen() {
             <PrimaryButton
               title="Enregistrer le mot de passe"
               handlePress={handleForgetPassword}
-              disabled={!email || !password}
+              disabled={!confirmPassword || !password}
               showLoading={true}
               loadingValue="Enregistrement en cours..."
             />

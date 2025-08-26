@@ -15,18 +15,18 @@ import {
   View,
 } from "react-native";
 
-import { router } from "expo-router";
-import { ArrowLeft, Eye, EyeOff, Lock, Mail } from 'lucide-react-native';
 import { PrimaryButton } from "@/components/buttons/primaryButton";
 import { GoBack } from "@/components/headers/goBack";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { router } from "expo-router";
+import { Eye, EyeOff, Lock, Mail } from "lucide-react-native";
 
 const { width, height } = Dimensions.get("window");
 
 export default function AuthScreen() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
+  const [showPassword, setShowPassword] = useState(true);
 
   const handleBack = () => {};
 
@@ -38,11 +38,11 @@ export default function AuthScreen() {
     try {
       const response = await accountService.login({ email, password });
       AsyncStorage.setItem("userInfo", JSON.stringify(response));
-      router.push("/(tabs)/home");
+      router.push("/profil_capillaire/formOne");
       console.log(response);
     } catch (error) {
-      console.error('Login failed:', error);
-      Alert.alert("Erreur", "Une erreur est survenue lors de la connexion.");
+      console.error("Login failed:", error);
+      Alert.alert("Erreur de connexion", "Identifiants invalides.");
     }
   };
 
@@ -59,12 +59,12 @@ export default function AuthScreen() {
           </View>
 
           {/* Content */}
-          <View style={styles.content}>
-            <View style={styles.formContainer}>
-              <Text style={styles.title} className="text-[#88540B]">
+          <View className="px-4">
+            <View>
+              <Text className="text-[#88540B] font-medium mt-10 text-center text-3xl">
                 Connectez-vous!
               </Text>
-              <Text style={styles.subtitle}>
+              <Text className="text-[#4D5962] text-xs text-center my-5">
                 Heureux de vous revoir! Renseignez vos informations pour vous
                 connecter.
               </Text>
@@ -75,7 +75,7 @@ export default function AuthScreen() {
                   <View style={styles.inputWrapper}>
                     <Mail style={styles.inputIcon} />
                     <TextInput
-                          style={styles.input}
+                      style={styles.input}
                       placeholder="Mail"
                       placeholderTextColor="#999"
                       value={email}
@@ -102,17 +102,25 @@ export default function AuthScreen() {
                       onPress={togglePasswordVisibility}
                       style={styles.eyeIcon}
                     >
-                      {showPassword ? <EyeOff color="#333" size={18} /> : <Eye color="#333" size={18} />}
+                      {!showPassword ? (
+                        <EyeOff color="#333" size={18} />
+                      ) : (
+                        <Eye color="#333" size={18} />
+                      )}
                     </TouchableOpacity>
                   </View>
                 </View>
 
                 {/* Forgot Password */}
                 <TouchableOpacity style={styles.forgotPassword}>
-                  <Text style={styles.forgotPasswordText}
-                  onPress={() => {
-                    router.push({pathname: "/forgetPassword", params : {source : "password_reset", email : email}});
-                  }}
+                  <Text
+                    style={styles.forgotPasswordText}
+                    onPress={() => {
+                      router.push({
+                        pathname: "/forgetPassword",
+                        params: { source: "password_reset", email: email },
+                      });
+                    }}
                   >
                     Mot de passe oublié
                   </Text>
@@ -126,22 +134,20 @@ export default function AuthScreen() {
                   showLoading={true}
                   loadingValue="Connexion en cours..."
                 />
-               
 
                 {/* Sign Up Link */}
-                
-                <View style={styles.signupContainer}>
-                  <Text style={styles.signupText}>Vous êtes nouveau? </Text>
-                  <TouchableOpacity
-                    onPress={() => {
-                      router.push("/register");
-                    }}
-                  >
-                    <Text style={styles.signupLink}>S&apos;inscrire</Text>
-                  </TouchableOpacity>
-                </View>
               </View>
             </View>
+          </View>
+          <View className="flex flex-row items-center justify-center mt-4 absolute bottom-8">
+            <Text className="text-[#4D5962] text-xs">Vous êtes nouveau ? </Text>
+            <TouchableOpacity
+              onPress={() => {
+                router.push("/register");
+              }}
+            >
+              <Text style={styles.signupLink}>S&apos;inscrire</Text>
+            </TouchableOpacity>
           </View>
         </KeyboardAvoidingView>
       </SafeAreaView>
@@ -202,7 +208,7 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   subtitle: {
-    fontSize: 16,
+    fontSize: 12,
     textAlign: "center",
     marginBottom: 40,
     lineHeight: 22,
@@ -245,7 +251,7 @@ const styles = StyleSheet.create({
   },
   forgotPasswordText: {
     fontSize: 14,
-    color: "#666",
+    color: "#587950",
   },
   loginButton: {
     borderRadius: 12,
@@ -269,5 +275,6 @@ const styles = StyleSheet.create({
   },
   signupLink: {
     fontSize: 14,
+    color: "#A46C04",
   },
 });

@@ -14,7 +14,7 @@ export function GoBack({
 }) {
   return (
     <View
-      className="flex flex-row justify-between items-center mt-5"
+      className="relative flex flex-row items-center my-5"
       style={{
         paddingTop: Platform.OS === "android" ? 32 : 0,
       }}
@@ -38,14 +38,15 @@ export function GoBack({
       </TouchableOpacity>
 
       {title && (
-        <Text
-          className="text-big_stone text-xl font-black"
-          style={{ fontFamily: "Gt_Super" }}
-        >
-          {title}
-        </Text>
+        <View className="absolute left-0 right-0 items-center">
+          <Text
+            className="text-[#4D5962] text-base font-medium"
+            style={{ fontFamily: "Gt_Super" }}
+          >
+            {title}
+          </Text>
+        </View>
       )}
-      <View></View>
     </View>
   );
 }
