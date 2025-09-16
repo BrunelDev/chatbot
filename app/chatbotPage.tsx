@@ -1,8 +1,15 @@
 import { ChatHeadBar } from "@/components/chat/chatHeadBar";
-import { sendMessageToRag } from "@/services/ragService";
+import {
+  createConversationSession,
+  StartConversationPayload,
+  startOrContinueConversation,
+  getFullConversation,
+} from "@/services/chatBotService";
 import { Chat, defaultTheme, MessageType } from "@flyerhq/react-native-chat-ui";
-import React, { ReactNode, useState } from "react";
+import React, { ReactNode, useCallback, useEffect, useState } from "react";
 import { Text, View } from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useFocusEffect } from "expo-router";
 
 const uuidv4 = () => {
   return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
@@ -31,19 +38,73 @@ const ChatPage = () => {
       <View
         style={{
           backgroundColor:
-            user.id !== message.author.id ? "#F3F9FF" : "#ffbc6d",
-          borderColor: "#FFEED3",
-          borderWidth: 1,
+            user.id !== message.author.id ? "transparent" : "#FFFDC2",
+          borderColor: "transparent",
+          borderWidth: 0,
           overflow: "hidden",
         }}
         className={`${
           user.id !== message.author.id ? "rounded-tl-none" : "rounded-br-none"
         } rounded-2xl text-international_orange-200`}
       >
-        {child}
+        <Text
+          style={{
+            fontFamily: "Urbanist",
+            fontSize: 15,
+            color: user.id !== message.author.id ? "#333" : "#000",
+            lineHeight: 20,
+          }}
+        >
+          {message.type === "text" ? message.text : child}
+        </Text>
       </View>
     );
   };
+  useFocusEffect(
+    useCallback(() => {
+      const loadChatId = async () => {
+        console.log("start");
+        try {
+          const chatId = await AsyncStorage.getItem("chatId");
+          if (chatId) {
+            setCurrentChatId(chatId);
+          } else {
+            const newChatId = await createConversationSession({
+              title: "Chat",
+            });
+            setCurrentChatId(newChatId.session_id);
+            await AsyncStorage.setItem("chatId", newChatId.session_id);
+          }
+          if (chatId) {
+            const conversation = await getFullConversation(chatId!);
+            console.log(conversation);
+            /**
+         *  author: User;
+                 createdAt?: number;
+                 id: string;
+                 metadata?: Record<string, any>;
+                 roomId?: string;
+                 status?: 'delivered' | 'error' | 'seen' | 'sending' | 'sent';
+                 type: 'custom' | 'file' | 'image' | 'text' | 'unsupported';
+                 updatedAt?: number;
+         */
+            setMessages(
+              conversation.messages.map((message) => ({
+                id: message.id.toString(),
+                type: "text",
+                author:
+                  message.message_type === "user" ? user : { id: "assistant" },
+                text: message.content,
+              }))
+            );
+          }
+        } catch (error) {
+          console.error("Error loading chatId:", error);
+        }
+      };
+      loadChatId();
+    }, [])
+  );
 
   const handleSendPress = async (message: MessageType.PartialText) => {
     try {
@@ -60,10 +121,7 @@ const ChatPage = () => {
       setMessages((currentMessages) => [textMessage, ...currentMessages]);
 
       // Get bot response
-      const response = await sendMessageToRag({
-        message: message.text,
-        profile: "Client",
-      });
+      const response = await sendMessageToRag(message.text, currentChatId);
 
       // Create bot response message
       const responseMessage: MessageType.Text = {
@@ -74,7 +132,7 @@ const ChatPage = () => {
         },
         createdAt: Date.now(),
         id: uuidv4(),
-        text: response.response,
+        text: response?.ai_response.content!,
         type: "text",
       };
 
@@ -118,8 +176,9 @@ const ChatPage = () => {
           )}
           messages={messages}
           onSendPress={handleSendPress}
+          showUserAvatars={true}
           user={user}
-          renderBubble={renderBubble}
+          renderBubble={(props) => renderBubble(props)}
           theme={{
             ...defaultTheme,
             colors: {
@@ -145,3 +204,27 @@ const ChatPage = () => {
 };
 
 export default ChatPage;
+/**
+ * 
+ * @param message 
+ * @returns 
+ *  message?: string;
+  session_id?: string;
+  image_url?: string;
+ */
+
+const sendMessageToRag = async (message: string, session_id?: string) => {
+  try {
+    const payload: StartConversationPayload = {
+      message,
+    };
+    if (session_id) {
+      payload.session_id = session_id;
+    }
+    const response = await startOrContinueConversation(payload);
+    return response;
+  } catch (error) {
+    console.error("Error sending message:", error);
+    return null;
+  }
+};

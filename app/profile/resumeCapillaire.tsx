@@ -3,10 +3,31 @@ import { GoBack } from "@/components/headers/goBack";
 import { Resume } from "@/components/resumeCapillaire";
 import { ResumeItem } from "@/components/resumeItem";
 import { router } from "expo-router";
-import React from "react";
+import React, { useEffect } from "react";
 import { SafeAreaView, View } from "react-native";
+import { useUser } from "@/hooks/useUser";
+import profileService, { BioProfileResponse } from "@/services/profile";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+
 
 export default function ResumeCapillaire() {
+  const { user } = useUser();
+  const [hairProfile, setHairProfile] =
+    React.useState<BioProfileResponse | null>(null);
+  useEffect(() => {
+    const getHairProfile = async () => {
+      try {
+        const response = await profileService.getBioProfile();
+        console.log("Bio profile response", response);
+        await AsyncStorage.setItem("hairProfile", JSON.stringify(response.hair_profile));
+        console.log(response);
+        setHairProfile(response);
+      } catch (error) {
+        console.error(error);
+      }
+    };
+    getHairProfile();
+  }, []);
   const items: {
     title: string;
     value: string;
@@ -19,35 +40,36 @@ export default function ResumeCapillaire() {
   }[] = [
     {
       title: "Type de cheveux",
-      value: "cheveux crépus",
+      value: hairProfile?.hair_profile.hair_type || "Inconnu",
       href: "/profile/stepOne",
     },
     {
       title: "Longueur des cheveux",
-      value: "Cheveux courts",
+      value: hairProfile?.hair_profile.hair_length || "Inconnu",
       href: "/profile/stepTwo",
     },
     {
       title: "Objectifs",
-      value: "Pousse, réduction de la casse",
+      value: hairProfile?.hair_profile.goals.join(", ") || "Inconnu",
       href: "/profile/stepThree",
     },
     {
       title: "Problèmes",
-      value: "Cuir chevelu sec, casse excessive",
+      value: hairProfile?.hair_profile.concerns.join(", ") || "Inconnu",
       href: "/profile/stepFour",
     },
     {
       title: "Routines",
-      value: "Aucune pour le moment",
+      value: hairProfile?.hair_profile.routine_status || "Inconnu",
       href: "/profile/stepFive",
     },
   ];
+
   return (
     <View className="bg-candlelight-50 flex-1 w-full px-4">
       <SafeAreaView />
       <GoBack title="Résumé capillaire" />
-      <Resume />
+      <Resume bio={hairProfile?.bio} />
       <View className="flex flex-col gap-y-4 mt-6">
         {items.map((item) => (
           <ResumeItem

@@ -1,3 +1,4 @@
+import { PrimaryButton } from "@/components/buttons/primaryButton";
 import { GoBack } from "@/components/headers/goBack";
 import { SubTitle, Title } from "@/components/textComponents/title";
 import WheelPicker from "@quidone/react-native-wheel-picker";
@@ -15,7 +16,7 @@ import {
 } from "react-native";
 
 export default function FormThree() {
-  const [value, setValue] = useState('');
+  const [value, setValue] = useState("");
   const hairHeight = [
     {
       value: "Très courts",
@@ -56,39 +57,21 @@ export default function FormThree() {
           value={value}
           onValueChanged={({ item: { value } }) => setValue(value)}
           enableScrollByTapOnItem={true}
-        
           itemTextStyle={{
             color: "#121C12",
             fontSize: 16,
             fontWeight: "400",
             lineHeight: 24,
-            paddingVertical: "auto"
+            paddingVertical: "auto",
           }}
-          
         />
 
         {/* Sticky footer button */}
-        <View className="absolute w-full bottom-10 left-4 flex flex-row items-center justify-between ">
-          <TouchableOpacity
-            className="flex flex-row items-center"
-            onPress={() => {
-              router.push("/profil_capillaire/formFour");
-            }}
-          >
-            <Text className="text-[#4D5962] font-medium">Je ne sais pas</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            onPress={() => {
-              router.push("/profil_capillaire/formFour");
-            }}
-            className="flex flex-row  justify-center items-center bg-candlelight-500 rounded-full"
-            style={{ width: 44, height: 44 }}
-          >
-            <Image
-              source={require("../../assets/icons/arrow-left.svg")}
-              style={{ width: 20, height: 20 }}
-            />
-          </TouchableOpacity>
+        <View className="absolute bottom-14 left-4 right-4">
+          <PrimaryButton
+            title="Enregister"
+            handlePress={() => router.back()}
+          />
         </View>
       </View>
     </KeyboardAvoidingView>

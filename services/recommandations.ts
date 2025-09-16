@@ -34,15 +34,13 @@ export interface HomeResponse {
   greeting: string;
 }
 
-// #endregion
 
-// #region -------- API FUNCTIONS --------
 
 const recommendationService = {
   getHomeData: async (): Promise<HomeResponse> => {
     try {
       const { data } = await apiClient.get<HomeResponse>(
-        "/api/profiles/home/"
+        "/profiles/home/"
       );
       return data;
     } catch (error) {
@@ -51,6 +49,6 @@ const recommendationService = {
   },
 };
 
+
 export default recommendationService;
 
-// #endregion

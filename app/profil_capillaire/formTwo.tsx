@@ -1,6 +1,6 @@
 import { GoBack } from "@/components/headers/goBack";
 import { SubTitle, Title } from "@/components/textComponents/title";
-import { useFormStore } from "@/context/useFormStore";
+import { useFormStore, HAIR_TYPE_CHOICES } from "@/context/useFormStore";
 import { Image } from "expo-image";
 import { router } from "expo-router";
 import React from "react";
@@ -17,22 +17,22 @@ import {
 const hairTypesData = [
   {
     title: "Cheveux lisses",
-    value: "Lisse",
+    value: HAIR_TYPE_CHOICES.Lisse,
     image: require("../../assets/images/cheveux_lisses.png"),
   },
   {
     title: "Cheveux ondulés",
-    value: "Ondulé",
+    value: HAIR_TYPE_CHOICES.Ondule,
     image: require("../../assets/images/cheveux_ondules.png"),
   },
   {
     title: "Cheveux bouclés",
-    value: "Bouclé",
+    value: HAIR_TYPE_CHOICES.Boucle,
     image: require("../../assets/images/cheveux_boucles.png"),
   },
   {
     title: "Cheveux frisés à crépus",
-    value: "Crépu",
+    value: HAIR_TYPE_CHOICES.FriseCrepus,
     image: require("../../assets/images/cheveux_crepus.png"),
   },
 ];
@@ -40,8 +40,23 @@ const hairTypesData = [
 export default function FormTwo() {
   const { hairType, setFormData } = useFormStore();
 
-  const handleSelectHairType = (value: string) => {
-    setFormData({ hairType: value });
+  const handleSelectHairType = (value: HAIR_TYPE_CHOICES) => {
+    switch (value) {
+      case HAIR_TYPE_CHOICES.Lisse:
+        setFormData({ hairType: HAIR_TYPE_CHOICES.Lisse });
+        break;
+      case HAIR_TYPE_CHOICES.Ondule:
+        setFormData({ hairType: HAIR_TYPE_CHOICES.Ondule });
+        break;
+      case HAIR_TYPE_CHOICES.Boucle:
+        setFormData({ hairType: HAIR_TYPE_CHOICES.Boucle });
+        break;
+      case HAIR_TYPE_CHOICES.FriseCrepus:
+        setFormData({ hairType: HAIR_TYPE_CHOICES.FriseCrepus });
+        break;
+      default:
+        setFormData({ hairType: "" });
+    }
   };
 
   return (
@@ -87,7 +102,7 @@ export default function FormTwo() {
             style={{ width: 44, height: 44 }}
           >
             <Image
-              source={require("../../assets/icons/arrow-left.svg")}
+              source={require("../../assets/icons/arrow-right.svg")}
               style={{ width: 20, height: 20 }}
             />
           </TouchableOpacity>
@@ -105,10 +120,10 @@ const HairType = ({
   onPress,
 }: {
   title: string;
-  value: string;
+  value: HAIR_TYPE_CHOICES;
   image: any;
   active: boolean;
-  onPress: (value: string) => void;
+  onPress: (value: HAIR_TYPE_CHOICES) => void;
 }) => {
   const { width } = useWindowDimensions();
   return (

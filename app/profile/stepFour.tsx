@@ -1,6 +1,6 @@
+import { PrimaryButton } from "@/components/buttons/primaryButton";
 import { GoBack } from "@/components/headers/goBack";
 import { SubTitle, Title } from "@/components/textComponents/title";
-import { Image } from "expo-image";
 import { router } from "expo-router";
 import { Check } from "lucide-react-native";
 import React, { useMemo, useState } from "react";
@@ -94,7 +94,7 @@ export default function FormOne() {
     { title: "Définir mes boucles", value: "Brillance" },
     { title: "Hydrater mes cheveux", value: "Volume" },
     { title: "Gérer les frisottis", value: "Hydratation" },
-    { title: "Stimuler le cuir chevelu", value: "Hydratation" },
+    { title: "Stimuler le cuir chevelu", value: "Stimulation" },
   ];
 
   return (
@@ -116,27 +116,11 @@ export default function FormOne() {
         </View>
 
         {/* Sticky footer button */}
-        <View className="absolute w-full bottom-10 left-4 flex flex-row items-center justify-between ">
-          <TouchableOpacity
-            className="flex flex-row items-center"
-            onPress={() => {
-              router.push("/profil_capillaire/formFive");
-            }}
-          >
-            <Text className="text-[#4D5962] font-medium">Passer</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            onPress={() => {
-              router.push("/profil_capillaire/formFive");
-            }}
-            className="flex flex-row  justify-center items-center bg-candlelight-500 rounded-full"
-            style={{ width: 44, height: 44 }}
-          >
-            <Image
-              source={require("../../assets/icons/arrow-left.svg")}
-              style={{ width: 20, height: 20 }}
-            />
-          </TouchableOpacity>
+        <View className="absolute bottom-14 left-4 right-4">
+          <PrimaryButton
+            title="Enregistrer"
+            handlePress={() => router.back()}
+          />
         </View>
       </View>
     </KeyboardAvoidingView>

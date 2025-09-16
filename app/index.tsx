@@ -12,6 +12,7 @@ import {
 
 export default function HomeScreen() {
   const flatListRef = useRef<FlatList>(null);
+  const router = useRouter();
   const onboardindScreens = [
     {
       image: require("../assets/images/onboarding1.png"),
@@ -23,24 +24,28 @@ export default function HomeScreen() {
       image: require("../assets/images/onboarding2.png"),
       title: "Des conseils qui te ressemblent",
       description:
-        "Pose tes questions, partage tes habitudes, et reçois des recommandations précises selon ton type de cheveux, tes objectifs et ta routine.Tout est personnalisé, rien n’est standard.",
+        "Pose tes questions, partage tes habitudes, et reçois des recommandations précises selon ton type de cheveux, tes objectifs et ta routine.Tout est personnalisé, rien n'est standard.",
     },
     {
       image: require("../assets/images/onboarding3.png"),
       title: "Parlons un peu de tes cheveux",
       description:
-        "Pour mieux t’accompagner, j’ai besoin de mieux te connaître.En quelques questions simples, on définit ensemble ton profil capillaire.",
+        "Pour mieux t'accompagner, j'ai besoin de mieux te connaître.En quelques questions simples, on définit ensemble ton profil capillaire.",
     },
   ];
   const { width } = useWindowDimensions();
   const [currentIndex, setCurrentIndex] = useState(0);
+
   const goToNextSlide = () => {
     if (currentIndex < onboardindScreens.length - 1) {
+      console.log("currentIndex", currentIndex);
+      setCurrentIndex(currentIndex + 1);
       flatListRef.current?.scrollToIndex({
         index: currentIndex + 1,
         animated: true,
       });
-    } else if (currentIndex === 2) {
+    } else {
+      // On est à la dernière slide, naviguer vers la page de connexion
       router.push("/(auth)/login");
     }
   };
@@ -53,7 +58,6 @@ export default function HomeScreen() {
       });
     }
   };
-  const router = useRouter();
 
   return (
     <View className="relative bg-[#FEFDE8]">

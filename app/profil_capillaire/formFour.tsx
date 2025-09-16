@@ -1,6 +1,6 @@
 import { GoBack } from "@/components/headers/goBack";
 import { SubTitle, Title } from "@/components/textComponents/title";
-import { useFormStore } from "@/context/useFormStore";
+import { useFormStore, HAIR_CONCERNS_CHOICES } from "@/context/useFormStore";
 import { Image } from "expo-image";
 import { router } from "expo-router";
 import { Check } from "lucide-react-native";
@@ -14,19 +14,20 @@ import {
   View,
 } from "react-native";
 
-const problemsData = [
-  { title: "Cheveux secs", value: "Secs" },
-  { title: "Cheveux gras", value: "Gras" },
-  { title: "Pellicules", value: "Pellicules" },
-  { title: "Démangeaisons", value: "Démangeaisons" },
-  { title: "Chute de cheveux", value: "Chute" },
-  { title: "Manque de volume", value: "Volume" },
+const problemsData : { title: string; value: HAIR_CONCERNS_CHOICES }[] = [
+  { title: "Cheveux secs", value: HAIR_CONCERNS_CHOICES.CheveuxSec },
+  { title: "Cheveux gras", value: HAIR_CONCERNS_CHOICES.CheveuxGras },
+  { title: "Pellicules", value: HAIR_CONCERNS_CHOICES.Pellicules },
+  { title: "Démangeaisons", value: HAIR_CONCERNS_CHOICES.Demangeaisons },
+  { title: "Chute de cheveux", value: HAIR_CONCERNS_CHOICES.ChuteCheveux },
+  { title: "Manque de volume", value: HAIR_CONCERNS_CHOICES.ManqueDeVolume },
 ];
 
 export default function FormFour() {
   const { hairProblems, setFormData } = useFormStore();
 
-  const handleSelectProblem = (value: string) => {
+  const handleSelectProblem = (value: HAIR_CONCERNS_CHOICES) => {
+    if (!value || !hairProblems) return;
     const newProblems = hairProblems.includes(value)
       ? hairProblems.filter((item) => item !== value)
       : [...hairProblems, value];
@@ -51,7 +52,7 @@ export default function FormFour() {
               key={problem.value}
               title={problem.title}
               value={problem.value}
-              active={hairProblems.includes(problem.value)}
+              active={hairProblems?.includes(problem.value) || false}
               onPress={handleSelectProblem}
             />
           ))}
@@ -75,7 +76,7 @@ export default function FormFour() {
             style={{ width: 44, height: 44 }}
           >
             <Image
-              source={require("../../assets/icons/arrow-left.svg")}
+              source={require("../../assets/icons/arrow-right.svg")}
               style={{ width: 20, height: 20 }}
             />
           </TouchableOpacity>
@@ -92,9 +93,9 @@ const Objective = ({
   onPress,
 }: {
   title: string;
-  value: string;
-  active: boolean;
-  onPress: (value: string) => void;
+  value: HAIR_CONCERNS_CHOICES;
+  active: boolean | undefined;
+  onPress: (value: HAIR_CONCERNS_CHOICES) => void;
 }) => {
   return (
     <TouchableOpacity

@@ -1,34 +1,25 @@
 import { GoBack } from "@/components/headers/goBack";
+import notificationsService, {
+  Notification,
+} from "@/services/notificationsService";
 import { Image } from "expo-image";
-import React from "react";
-import { FlatList, SafeAreaView, Text, View } from "react-native";
+import React, { useEffect, useState } from "react";
+import { FlatList, Text, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 export default function NotificationsPage() {
-  const notifications = [
-    {
-      id: 1,
-      title: "Besoin d’un boost hydratation ? ",
-      description: "Testez une méthode LOC adaptée à vos cheveux",
-      //date is iso
+  const [notifications, setNotifications] = useState<Notification[]>([]);
 
-      date: new Date("2025-08-16").toISOString(),
-      read: false,
-    },
-    {
-      id: 2,
-      title: "Recommandations de produits",
-      description:
-        "La gamme ‘Cocoon Hair’ que vous aviez consultée est actuellement en promotion.",
-      date: new Date("2025-08-15").toISOString(),
-      read: false,
-    },
-    {
-      id: 3,
-      title: "Besoin d’un boost hydratation ?",
-      description: "Testez une méthode LOC adaptée à vos cheveux",
-      date: new Date("2025-08-14").toISOString(),
-      read: false,
-    },
-  ];
+  useEffect(() => {
+    const fetchNotifications = async () => {
+      try {
+        const response = await notificationsService.getNotifications();
+        setNotifications(response.results);
+      } catch (error) {
+        console.error(error);
+      }
+    };
+    fetchNotifications();
+  }, []);
   return (
     <View className="bg-candlelight-50 h-full w-full px-4">
       <SafeAreaView />
@@ -63,14 +54,6 @@ const EmptyState = () => {
   );
 };
 
-interface Notification {
-  id: number;
-  title: string;
-  description: string;
-  date: string;
-  read: boolean;
-}
-
 const getTimeline = (date: string) => {
   const today = new Date();
   const notificationDate = new Date(date);
@@ -89,7 +72,7 @@ const NotificationItem = ({ notification }: { notification: Notification }) => {
   return (
     <View
       className={`${
-        notification.read ? "" : "bg-candlelight-100 p-3 rounded-xl"
+        notification.is_read ? "" : "bg-candlelight-100 p-3 rounded-xl"
       } flex flex-col gap-3`}
     >
       <View className="flex flex-row items-center justify-between">
@@ -97,10 +80,12 @@ const NotificationItem = ({ notification }: { notification: Notification }) => {
           {notification.title}
         </Text>
         <Text className="text-envy-800 text-[10px]">
-          {getTimeline(notification.date)}
+          {notification.time_ago}
         </Text>
       </View>
-      <Text className="text-[#4D5962] text-xs">{notification.description}</Text>
+      <Text className="text-[#4D5962] text-xs">
+        {notification.display_message}
+      </Text>
     </View>
   );
 };

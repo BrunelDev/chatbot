@@ -2,7 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Design tokens mapped to Tailwind rgb(var(--token)/<alpha-value>) pattern */
+
 :root {
   /* Primary (green) - #587950 */
   --color-primary-0: 88 121 80;

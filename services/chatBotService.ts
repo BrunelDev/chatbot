@@ -66,14 +66,14 @@ export interface CreateSessionPayload {
 /**
  * Starts a new conversation or continues an existing one.
  * Can handle text-only, image-only, or mixed content.
- * POST /api/chat/start/
+ * POST /chat/start/
  */
 export const startOrContinueConversation = async (
   payload: StartConversationPayload
 ): Promise<ConversationResponse> => {
   try {
     const { data } = await apiClient.post<ConversationResponse>(
-      "/api/chat/start/",
+      "/chat/start/",
       payload
     );
     return data;
@@ -84,11 +84,11 @@ export const startOrContinueConversation = async (
 
 /**
  * Interrupts the AI's response generation.
- * POST /api/chat/interrupt/
+ * POST /chat/interrupt/
  */
 export const interruptIa = async (sessionId: string): Promise<void> => {
   try {
-    await apiClient.post("/api/chat/interrupt/", { session_id: sessionId });
+    await apiClient.post("/chat/interrupt/", { session_id: sessionId });
   } catch (error) {
     throw handleApiError(error, "Failed to interrupt AI");
   }
@@ -96,12 +96,12 @@ export const interruptIa = async (sessionId: string): Promise<void> => {
 
 /**
  * Retrieves the list of past conversation sessions.
- * GET /api/chat/sessions/
+ * GET /chat/sessions/
  */
 export const getConversationHistory = async (): Promise<SessionsListResponse> => {
   try {
     const { data } = await apiClient.get<SessionsListResponse>(
-      "/api/chat/sessions/"
+      "/chat/sessions/"
     );
     return data;
   } catch (error) {
@@ -111,11 +111,11 @@ export const getConversationHistory = async (): Promise<SessionsListResponse> =>
 
 /**
  * Deletes a specific conversation session.
- * DELETE /api/chat/sessions/{id}/
+ * DELETE /chat/sessions/{id}/
  */
 export const deleteConversationSession = async (id: number): Promise<void> => {
   try {
-    await apiClient.delete(`/api/chat/sessions/${id}/`);
+    await apiClient.delete(`/chat/sessions/${id}/`);
   } catch (error) {
     throw handleApiError(error, "Failed to delete session");
   }
@@ -123,14 +123,14 @@ export const deleteConversationSession = async (id: number): Promise<void> => {
 
 /**
  * Retrieves all messages for a specific session.
- * GET /api/chat/sessions/{session_id}/messages/
+ * GET /chat/sessions/{session_id}/messages/
  */
 export const getFullConversation = async (
   sessionId: string
 ): Promise<SessionMessagesResponse> => {
   try {
     const { data } = await apiClient.get<SessionMessagesResponse>(
-      `/api/chat/sessions/${sessionId}/messages/`
+      `/chat/sessions/${sessionId}/messages/`
     );
     return data;
   } catch (error) {
@@ -140,13 +140,13 @@ export const getFullConversation = async (
 
 /**
  * Creates a new conversation session.
- * POST /api/chat/sessions/
+ * POST /chat/sessions/
  */
 export const createConversationSession = async (
   payload: CreateSessionPayload
 ): Promise<Session> => {
   try {
-    const { data } = await apiClient.post<Session>("/api/chat/sessions/", payload);
+    const { data } = await apiClient.post<Session>("/chat/sessions/", payload);
     return data;
   } catch (error) {
     throw handleApiError(error, "Failed to create new session");

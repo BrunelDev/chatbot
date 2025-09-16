@@ -1,3 +1,4 @@
+import { PrimaryButton } from "@/components/buttons/primaryButton";
 import { GoBack } from "@/components/headers/goBack";
 import { SubTitle, Title } from "@/components/textComponents/title";
 import { Image } from "expo-image";
@@ -119,7 +120,7 @@ export default function FormTwo() {
       <View className="flex-1 bg-candlelight-50 px-4">
         <SafeAreaView />
         <GoBack />
-        <View className="flex flex-col gap-y-4" style={{marginBottom: 16}}>
+        <View className="flex flex-col gap-y-4" style={{ marginBottom: 16 }}>
           <Title title="Quel est votre type de cheveux ?" />
           <SubTitle title="Cette question nous permettra d’ identifier la texture principale pour personnaliser les conseils." />
         </View>
@@ -129,32 +130,17 @@ export default function FormTwo() {
               title={hairType.title}
               value={hairType.value}
               image={hairType.image}
+              key={hairType.value}
             />
           ))}
         </View>
 
         {/* Sticky footer button */}
-        <View className="absolute w-full bottom-10 left-4 flex flex-row items-center justify-between ">
-          <TouchableOpacity
-            className="flex flex-row items-center"
-            onPress={() => {
-              router.push("/profil_capillaire/formThree");
-            }}
-          >
-            <Text className="text-[#4D5962] font-medium">Je ne sais pas</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            onPress={() => {
-              router.push("/profil_capillaire/formThree");
-            }}
-            className="flex flex-row  justify-center items-center bg-candlelight-500 rounded-full"
-            style={{ width: 44, height: 44 }}
-          >
-            <Image
-              source={require("../../assets/icons/arrow-left.svg")}
-              style={{ width: 20, height: 20 }}
-            />
-          </TouchableOpacity>
+        <View className="absolute bottom-14 left-4 right-4">
+          <PrimaryButton
+            title="Enregistrer"
+            handlePress={() => router.back()}
+          />
         </View>
       </View>
     </KeyboardAvoidingView>
@@ -176,13 +162,18 @@ const HairType = ({
     <TouchableOpacity
       activeOpacity={0.7}
       style={{
-        width: width/2 -24,
+        width: width / 2 - 24,
       }}
       onPress={() => setActive(!active)}
-      className={`flex flex-col gap-3 items-center justify-between pt-1 pb-3 px-1 rounded-xl ${active ? "bg-envy-200" : "bg-envy-100"}`}
+      className={`flex flex-col gap-3 items-center justify-between pt-1 pb-3 px-1 rounded-xl ${
+        active ? "bg-envy-200" : "bg-envy-100"
+      }`}
     >
       <Image source={image} style={{ width: "100%", height: 170 }} />
-      <Text style={{ flexBasis: "auto" }} className="font-medium text-envy-950 text-sm">
+      <Text
+        style={{ flexBasis: "auto" }}
+        className="font-medium text-envy-950 text-sm"
+      >
         {title}
       </Text>
     </TouchableOpacity>

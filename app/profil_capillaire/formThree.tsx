@@ -1,6 +1,6 @@
 import { GoBack } from "@/components/headers/goBack";
 import { SubTitle, Title } from "@/components/textComponents/title";
-import { useFormStore } from "@/context/useFormStore";
+import { useFormStore, HAIR_LENGTH_CHOICES } from "@/context/useFormStore";
 import WheelPicker from "@quidone/react-native-wheel-picker";
 import { Image } from "expo-image";
 import { router } from "expo-router";
@@ -15,11 +15,11 @@ import {
 } from "react-native";
 
 const hairHeightData = [
-  { value: "Très courts", label: "Très courts" },
-  { value: "Courts", label: "Courts" },
-  { value: "Mi-longs", label: "Mi-longs" },
-  { value: "Longs", label: "Longs" },
-  { value: "Très longs", label: "Très longs" },
+  { value: HAIR_LENGTH_CHOICES.TresCourts, label: "Très courts" },
+  { value: HAIR_LENGTH_CHOICES.Courts, label: "Courts" },
+  { value: HAIR_LENGTH_CHOICES.MiLongs, label: "Mi-longs" },
+  { value: HAIR_LENGTH_CHOICES.Longs, label: "Longs" },
+  { value: HAIR_LENGTH_CHOICES.TresLongs, label: "Très longs" },
 ];
 
 export default function FormThree() {
@@ -39,10 +39,28 @@ export default function FormThree() {
         </View>
         <WheelPicker
           data={hairHeightData}
-          value={hairHeight}
-          onValueChanged={({ item: { value } }) =>
-            setFormData({ hairHeight: value })
-          }
+          value={hairHeight || HAIR_LENGTH_CHOICES.TresCourts}
+          onValueChanged={({ item: { value } }) => {
+            switch (value) {
+              case HAIR_LENGTH_CHOICES.TresCourts:
+                setFormData({ hairHeight: HAIR_LENGTH_CHOICES.TresCourts });
+                break;
+              case HAIR_LENGTH_CHOICES.Courts:
+                setFormData({ hairHeight: HAIR_LENGTH_CHOICES.Courts });
+                break;
+              case HAIR_LENGTH_CHOICES.MiLongs:
+                setFormData({ hairHeight: HAIR_LENGTH_CHOICES.MiLongs });
+                break;
+              case HAIR_LENGTH_CHOICES.Longs:
+                setFormData({ hairHeight: HAIR_LENGTH_CHOICES.Longs });
+                break;
+              case HAIR_LENGTH_CHOICES.TresLongs:
+                setFormData({ hairHeight: HAIR_LENGTH_CHOICES.TresLongs });
+                break;
+              default:
+                setFormData({ hairHeight: "" });
+            }
+          }}
           enableScrollByTapOnItem={true}
           itemTextStyle={{
             color: "#121C12",
@@ -71,7 +89,7 @@ export default function FormThree() {
             style={{ width: 44, height: 44 }}
           >
             <Image
-              source={require("../../assets/icons/arrow-left.svg")}
+              source={require("../../assets/icons/arrow-right.svg")}
               style={{ width: 20, height: 20 }}
             />
           </TouchableOpacity>

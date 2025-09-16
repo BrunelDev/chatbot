@@ -27,6 +27,7 @@ export default function FormOne() {
   const { goals, setFormData } = useFormStore();
 
   const handleSelectGoal = (value: string) => {
+    if (!goals) return;
     const newGoals = goals.includes(value)
       ? goals.filter((item) => item !== value)
       : [...goals, value];
@@ -51,7 +52,7 @@ export default function FormOne() {
               key={goal.value}
               title={goal.title}
               value={goal.value}
-              active={goals.includes(goal.value)}
+              active={goals?.includes(goal.value) || false}
               onPress={handleSelectGoal}
             />
           ))}
@@ -75,7 +76,7 @@ export default function FormOne() {
             style={{ width: 44, height: 44 }}
           >
             <Image
-              source={require("../../assets/icons/arrow-left.svg")}
+              source={require("../../assets/icons/arrow-right.svg")}
               style={{ width: 20, height: 20 }}
             />
           </TouchableOpacity>

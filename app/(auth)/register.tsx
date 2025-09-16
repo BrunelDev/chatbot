@@ -9,15 +9,14 @@ import React, { useState } from "react";
 import {
   Alert,
   Dimensions,
-  KeyboardAvoidingView,
-  Platform,
-  SafeAreaView,
+  ScrollView,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
   View,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 const { width, height } = Dimensions.get("window");
 
@@ -53,10 +52,7 @@ export default function AuthScreen() {
   return (
     <View className="bg-[#FEFDE8] h-full">
       <SafeAreaView style={styles.container}>
-        <KeyboardAvoidingView
-          behavior={Platform.OS === "ios" ? "padding" : "height"}
-          style={styles.keyboardView}
-        >
+        <ScrollView className="h-full">
           {/* Header */}
           <View className="px-4">
             <GoBack />
@@ -143,24 +139,21 @@ export default function AuthScreen() {
                   showLoading={true}
                   loadingValue="Création en cours..."
                 />
-
-                {/* Sign Up Link */}
-                <View style={styles.signupContainer}>
-                  <Text style={styles.signupText}>
-                    Vous avez déjà un compte ?{" "}
-                  </Text>
-                  <TouchableOpacity
-                    onPress={() => {
-                      router.push("/login");
-                    }}
-                  >
-                    <Text style={styles.signupLink}>Se connecter</Text>
-                  </TouchableOpacity>
-                </View>
               </View>
             </View>
           </View>
-        </KeyboardAvoidingView>
+          {/* Sign Up Link */}
+          <View style={styles.signupContainer} className="">
+            <Text style={styles.signupText}>Vous avez déjà un compte ? </Text>
+            <TouchableOpacity
+              onPress={() => {
+                router.push("/login");
+              }}
+            >
+              <Text style={styles.signupLink}>Se connecter</Text>
+            </TouchableOpacity>
+          </View>
+        </ScrollView>
       </SafeAreaView>
     </View>
   );
@@ -283,10 +276,9 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "center",
     alignItems: "center",
-    marginTop: 20,
   },
   signupText: {
-    fontSize: 14,
+    fontSize: 12,
   },
   signupLink: {
     fontSize: 14,

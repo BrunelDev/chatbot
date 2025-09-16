@@ -7,7 +7,6 @@ import {
   Dimensions,
   KeyboardAvoidingView,
   Platform,
-  SafeAreaView,
   StyleSheet,
   Text,
   TextInput,
@@ -17,9 +16,11 @@ import {
 
 import { PrimaryButton } from "@/components/buttons/primaryButton";
 import { GoBack } from "@/components/headers/goBack";
+import profileService from "@/services/profile";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router } from "expo-router";
 import { Eye, EyeOff, Lock, Mail } from "lucide-react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 const { width, height } = Dimensions.get("window");
 
@@ -38,6 +39,14 @@ export default function AuthScreen() {
     try {
       const response = await accountService.login({ email, password });
       AsyncStorage.setItem("userInfo", JSON.stringify(response));
+      const hairProfile = await AsyncStorage.getItem("hairProfile");
+      if (!hairProfile) {
+        const hairResponse = await profileService.getBioProfile();
+        await AsyncStorage.setItem(
+          "hairProfile",
+          JSON.stringify(hairResponse.hair_profile)
+        );
+      }
       router.push("/profil_capillaire/formOne");
       console.log(response);
     } catch (error) {
@@ -139,8 +148,8 @@ export default function AuthScreen() {
               </View>
             </View>
           </View>
-          <View className="flex flex-row items-center justify-center mt-4 absolute bottom-8">
-            <Text className="text-[#4D5962] text-xs">Vous êtes nouveau ? </Text>
+          <View className="flex flex-row items-center justify-center mt-auto">
+            <Text className="text-[#4D5962]  text-xs">Vous êtes nouveau ? </Text>
             <TouchableOpacity
               onPress={() => {
                 router.push("/register");

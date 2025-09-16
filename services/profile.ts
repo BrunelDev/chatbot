@@ -1,14 +1,14 @@
+import { HAIR_CONCERNS_CHOICES, HAIR_LENGTH_CHOICES, HAIR_TYPE_CHOICES, ROUTINE_STATUS_CHOICES } from "@/context/useFormStore";
 import apiClient, { handleApiError } from "./apiClient";
-
 
 // #region -------- TYPES --------
 
 export interface CreateHairProfilePayload {
-  goals: string[];
-  hair_type: string;
-  hair_length: string;
-  concerns: string[];
-  routine_status: string;
+  goals?: string[];
+  hair_type?: string;
+  hair_height?: string;
+  concerns?: string[];
+  routine_status?: string;
 }
 
 export interface HairConcernOption {
@@ -70,12 +70,12 @@ export interface HomeResponse {
   greeting: string;
 }
 
-interface BioHairProfile {
-  hair_type: string;
-  hair_length: string;
-  concerns: string[];
+export interface BioHairProfile {
+  hair_type: HAIR_TYPE_CHOICES ;
+  hair_length: HAIR_LENGTH_CHOICES;
+  concerns: HAIR_CONCERNS_CHOICES[];
   goals: string[];
-  routine_status: string;
+  routine_status: ROUTINE_STATUS_CHOICES;
   porosity: string;
   density: string;
   thickness: string;
@@ -102,12 +102,12 @@ export interface BioProfileResponse {
 // #region -------- API FUNCTIONS --------
 
 const profileService = {
-  createHairProfile: async (
+  updateHairProfile: async (
     payload: CreateHairProfilePayload
   ): Promise<HairProfileResponse> => {
     try {
-      const { data } = await apiClient.post<HairProfileResponse>(
-        "/api/profiles/hair/",
+      const { data } = await apiClient.patch<HairProfileResponse>(
+        "/profiles/hair/",
         payload
       );
       return data;
@@ -117,9 +117,7 @@ const profileService = {
   },
   getHome: async (): Promise<HomeResponse> => {
     try {
-      const { data } = await apiClient.get<HomeResponse>(
-        "/api/profiles/home/"
-      );
+      const { data } = await apiClient.get<HomeResponse>("/profiles/home/");
       return data;
     } catch (error) {
       throw handleApiError(error, "Failed to load home profile data.");
@@ -129,7 +127,7 @@ const profileService = {
   getBioProfile: async (): Promise<BioProfileResponse> => {
     try {
       const { data } = await apiClient.get<BioProfileResponse>(
-        "/api/auth/bio-profile/"
+        "/auth/bio-profile/"
       );
       return data;
     } catch (error) {
@@ -141,4 +139,3 @@ const profileService = {
 export default profileService;
 
 // #endregion
-

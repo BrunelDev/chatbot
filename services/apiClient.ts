@@ -59,7 +59,7 @@ apiClient.interceptors.response.use(
 
         // Request a new access token using the refresh token
         const { data } = await axios.post(
-          `${process.env.EXPO_PUBLIC_API_URL}/auth/token/refresh/`,
+          `${process.env.EXPO_PUBLIC_API_URL}auth/token/refresh/`,
           {
             refresh: refresh,
           }

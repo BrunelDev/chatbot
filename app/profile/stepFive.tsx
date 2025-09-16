@@ -1,16 +1,13 @@
+import { PrimaryButton } from "@/components/buttons/primaryButton";
 import { GoBack } from "@/components/headers/goBack";
 import { SubTitle, Title } from "@/components/textComponents/title";
 import WheelPicker from "@quidone/react-native-wheel-picker";
-import { Image } from "expo-image";
 import { router } from "expo-router";
 import React, { useState } from "react";
 import {
   KeyboardAvoidingView,
   Platform,
   SafeAreaView,
-  Text,
-  TouchableOpacity,
-  useWindowDimensions,
   View,
 } from "react-native";
 
@@ -58,31 +55,13 @@ export default function FormThree() {
         />
 
         {/* Sticky footer button */}
-        <View className="absolute w-full bottom-10 left-4 flex flex-row items-center justify-between ">
-          <TouchableOpacity
-            className="flex flex-row items-center"
-            onPress={() => {
-              router.push("/(tabs)/home");
-            }}
-          >
-            <Text className="text-[#4D5962] font-medium">Passer</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            onPress={() => {
-              router.push("/(tabs)/home");
-            }}
-            className="flex flex-row  justify-center items-center bg-candlelight-500 rounded-full"
-            style={{ width: 44, height: 44 }}
-          >
-            <Image
-              source={require("../../assets/icons/arrow-left.svg")}
-              style={{ width: 20, height: 20 }}
-            />
-          </TouchableOpacity>
+        <View className="absolute bottom-14 left-4 right-4">
+          <PrimaryButton
+            title="Enregistrer"
+            handlePress={() => router.back()}
+          />
         </View>
       </View>
     </KeyboardAvoidingView>
   );
 }
-
-
