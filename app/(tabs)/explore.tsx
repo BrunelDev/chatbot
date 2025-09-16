@@ -144,29 +144,7 @@ export default function Explore() {
   }, []);
 
   // Load products when category changes
-  useEffect(() => {
-    const loadProductsByCategory = async () => {
-      if (selectedCategory === "Toutes les catégories") {
-        // Show all recommendations
-        if (marketplaceData) {
-          setProducts(marketplaceData.recommendations);
-        }
-      } else {
-        try {
-          const categoryProducts =
-            await marketplaceService.getProductsByCategory(selectedCategory);
-          setProducts(categoryProducts);
-        } catch (error) {
-          Alert.alert(
-            "Erreur",
-            `Impossible de charger les produits pour la catégorie: ${selectedCategory}`
-          );
-          console.error(error);
-        }
-      }
-    };
-    loadProductsByCategory();
-  }, [selectedCategory, marketplaceData]);
+
 
   return (
     <View className="flex-1 bg-[#FEFDE8]">
@@ -222,7 +200,7 @@ export default function Explore() {
           />
         ) : (
           <FlatList
-            data={products}
+            data={selectedCategory === "Toutes les catégories" ? products : products.filter((product) => product.category === selectedCategory)}
             showsVerticalScrollIndicator={false}
             renderItem={({ item }) => (
               <Produit

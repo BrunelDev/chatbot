@@ -1,10 +1,27 @@
-import { Image } from "expo-image";
-import { router } from "expo-router";
-import { Platform, Text, TouchableOpacity, View } from "react-native";
+import { useImagePicker } from "@/hooks/useImagePicker";
 import { useUser } from "@/hooks/useUser";
+import { Image } from "expo-image";
+import { router, useFocusEffect } from "expo-router";
+import { useCallback, useState } from "react";
+import { Platform, Text, TouchableOpacity, View } from "react-native";
 
 export function PrimaryHeader() {
   const { user } = useUser();
+  const { getImageUri } = useImagePicker();
+  const [profileImageUri, setProfileImageUri] = useState<string | null>(null);
+
+  // Fonction pour charger l'image de profil
+  const loadProfileImage = useCallback(async () => {
+    const imageUri = await getImageUri();
+    setProfileImageUri(imageUri);
+  }, [getImageUri]);
+
+  // Charger l'image à chaque fois que l'écran est focalisé
+  useFocusEffect(
+    useCallback(() => {
+      loadProfileImage();
+    }, [loadProfileImage])
+  );
   return (
     <View
       className="w-full flex-row justify-between items-center px-4"
@@ -18,9 +35,13 @@ export function PrimaryHeader() {
           router.push("/profile/profilePage");
         }}
       >
-        <View className="rounded-full overflow-hidden w-[48px] h-[48px]">
+        <View className="rounded-full overflow-hidden w-[48px] h-[48px] border border-envy-300">
           <Image
-            source={require("@/assets/images/userProfile-img.png")}
+            source={
+              profileImageUri
+                ? { uri: profileImageUri }
+                : require("@/assets/images/userProfile-img.png")
+            }
             contentFit="cover"
             placeholder={require("@/assets/images/profile-img.png")}
             style={{ width: 48, height: 48 }}

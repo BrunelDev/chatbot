@@ -1,5 +1,6 @@
 import { PrimaryButton } from "@/components/buttons/primaryButton";
 import { GoBack } from "@/components/headers/goBack";
+import { useImagePicker } from "@/hooks/useImagePicker";
 import { useUser } from "@/hooks/useUser";
 import BottomSheet, {
   BottomSheetBackdrop,
@@ -8,7 +9,7 @@ import BottomSheet, {
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Image } from "expo-image";
 import { router } from "expo-router";
-import React, { useCallback, useRef } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   Alert,
   Text,
@@ -21,6 +22,9 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function Profile() {
   const { height } = useWindowDimensions();
+  const { user } = useUser();
+  const { selectAndSaveImage, getImageUri } = useImagePicker();
+  const [profileImageUri, setProfileImageUri] = useState<string | null>(null);
   const options: {
     title: string;
     href: "/(auth)/forgetPassword";
@@ -42,7 +46,38 @@ export default function Profile() {
       icon: require("../../assets/icons/shield.svg"),
     },
   ];
-  const { user } = useUser();
+
+  // Charger l'image de profil au montage du composant
+  useEffect(() => {
+    const loadProfileImage = async () => {
+      const imageUri = await getImageUri();
+      setProfileImageUri(imageUri);
+    };
+
+    loadProfileImage();
+  }, []);
+
+  // Fonction pour gérer la sélection d'image
+  const handleImageSelection = async () => {
+    try {
+      const imageUri = await selectAndSaveImage();
+      if (imageUri) {
+        setProfileImageUri(imageUri);
+        Alert.alert(
+          "Succès",
+          "Votre photo de profil a été mise à jour avec succès !",
+          [{ text: "OK" }]
+        );
+      }
+    } catch (error) {
+      console.error("Erreur lors de la sélection de l'image:", error);
+      Alert.alert(
+        "Erreur",
+        "Une erreur est survenue lors de la mise à jour de votre photo de profil.",
+        [{ text: "OK" }]
+      );
+    }
+  };
   const handleLogout = async () => {
     Alert.alert(
       "Se déconnecter",
@@ -124,11 +159,20 @@ export default function Profile() {
             <View>
               <View className="w-[140px] h-[140px] rounded-full overflow-hidden border-2 border-envy-400 mb-2">
                 <Image
-                  source={require("../../assets/images/userProfile-img.png")}
+                  source={
+                    profileImageUri
+                      ? { uri: profileImageUri }
+                      : require("../../assets/images/userProfile-img.png")
+                  }
                   style={{ width: 140, height: 140 }}
+                  contentFit="cover"
                 />
               </View>
-              <TouchableOpacity className="flex items-center justify-center w-[36px] h-[36px] bg-candlelight-100 rounded-full border border-envy-400 absolute bottom-0 right-0">
+              <TouchableOpacity
+                className="flex items-center justify-center w-[36px] h-[36px] bg-candlelight-100 rounded-full border border-envy-400 absolute bottom-0 right-0"
+                onPress={handleImageSelection}
+                activeOpacity={0.7}
+              >
                 <Image
                   source={require("../../assets/icons/image.svg")}
                   style={{ width: 16, height: 16 }}

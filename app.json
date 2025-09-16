@@ -15,7 +15,9 @@
       "infoPlist": {
         "CFBundleDisplayName": "Boucles en Poésie",
         "CFBundleName": "Boucles en Poésie",
-        "ITSAppUsesNonExemptEncryption": false
+        "ITSAppUsesNonExemptEncryption": false,
+        "NSPhotoLibraryUsageDescription": "Cette application a besoin d'accéder à vos photos pour vous permettre de changer votre photo de profil.",
+        "NSCameraUsageDescription": "Cette application a besoin d'accéder à votre caméra pour prendre des photos de profil."
       }
     },
     "android": {
@@ -23,7 +25,12 @@
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "edgeToEdgeEnabled": true
+      "edgeToEdgeEnabled": true,
+      "permissions": [
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE",
+        "CAMERA"
+      ]
     },
     "web": {
       "bundler": "metro",
@@ -43,14 +50,7 @@
       ],
       "expo-font",
       "expo-web-browser",
-      [
-        "expo-build-properties",
-        {
-          "ios": {
-            "useFrameworks": "static"
-          }
-        }
-      ],
+      "expo-image-picker",
       [
         "react-native-google-mobile-ads",
         {

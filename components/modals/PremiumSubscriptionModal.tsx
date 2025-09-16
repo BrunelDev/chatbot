@@ -128,9 +128,11 @@ export default function PremiumSubscriptionModal({
                 </TouchableOpacity>
 
                 {/* Disclaimer */}
-                <TouchableOpacity onPress={() => {
-                  router.back()
-                }}>
+                <TouchableOpacity
+                  onPress={() => {
+                    router.back();
+                  }}
+                >
                   <Text className="text-center text-black text-xs">
                     Sans engagement
                   </Text>

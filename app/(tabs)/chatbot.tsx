@@ -123,6 +123,7 @@ const Chatbot = () => {
 
   const handleSendPress = async (message: MessageType.PartialText) => {
     // Check if user is premium, if not show subscription modal
+    /*
     if (
       !userData?.user?.is_premium &&
       !userData?.user?.can_use_premium_features
@@ -130,6 +131,7 @@ const Chatbot = () => {
       setShowSubscriptionModal(true);
       return;
     }
+    */
 
     // Show interstitial ad occasionally (every 3rd message)
     const messageCount = messages.length;
@@ -215,7 +217,7 @@ const Chatbot = () => {
           sendButtonVisibilityMode="always"
           emptyState={() => (
             <Text className="font-medium text-3xl text-envy-500">
-              Bonjour Emilie, je suis ton coach capillaire
+              Bonjour {userData?.user?.username}, je suis ton coach capillaire
             </Text>
           )}
           messages={messages}
