@@ -21,6 +21,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router } from "expo-router";
 import { Eye, EyeOff, Lock, Mail } from "lucide-react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useSession } from "../../ctx";
 
 const { width, height } = Dimensions.get("window");
 
@@ -28,6 +29,7 @@ export default function AuthScreen() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(true);
+  const { signIn } = useSession();
 
   const handleBack = () => {};
 
@@ -38,16 +40,62 @@ export default function AuthScreen() {
   const handleLogin = async () => {
     try {
       const response = await accountService.login({ email, password });
-      AsyncStorage.setItem("userInfo", JSON.stringify(response));
-      const hairProfile = await AsyncStorage.getItem("hairProfile");
-      if (!hairProfile) {
+
+      // Stocker les informations utilisateur dans AsyncStorage pour compatibilité
+      await AsyncStorage.setItem("userInfo", JSON.stringify(response));
+
+      // Créer une session pour le contexte d'authentification
+      const sessionData = JSON.stringify({
+        access: response.access,
+        refresh: response.refresh,
+        user: response.user,
+      });
+
+      // Sign in avec la session
+      signIn(sessionData);
+
+      // Vérifier si l'utilisateur a un profil capillaire complet
+      try {
         const hairResponse = await profileService.getBioProfile();
         await AsyncStorage.setItem(
           "hairProfile",
           JSON.stringify(hairResponse.hair_profile)
         );
+
+        // Si l'utilisateur a un profil complet, rediriger vers la page d'accueil
+        if (hairResponse.profile_completed) {
+          Alert.alert(
+            "Bienvenue !",
+            `Content de vous revoir ${
+              hairResponse.user_info.first_name ||
+              hairResponse.user_info.username
+            } ! 🎉`,
+            [
+              {
+                text: "Continuer",
+                onPress: () => router.replace("/(tabs)/home"),
+              },
+            ]
+          );
+        } else {
+          // Sinon, rediriger vers le formulaire de profil capillaire
+          Alert.alert(
+            "Profil incomplet",
+            "Complétez votre profil capillaire pour une expérience personnalisée.",
+            [
+              {
+                text: "Continuer",
+                onPress: () => router.replace("/profil_capillaire/formOne"),
+              },
+            ]
+          );
+        }
+      } catch (profileError) {
+        // Si erreur lors de la récupération du profil, rediriger vers le formulaire
+        console.warn("Erreur lors de la récupération du profil:", profileError);
+        router.replace("/profil_capillaire/formOne");
       }
-      router.push("/profil_capillaire/formOne");
+
       console.log(response);
     } catch (error) {
       console.error("Login failed:", error);
@@ -70,10 +118,10 @@ export default function AuthScreen() {
           {/* Content */}
           <View className="px-4">
             <View>
-              <Text className="text-[#88540B] font-medium mt-10 text-center text-3xl">
+              <Text className="text-[#88540B] font-medium mt-10 text-center text-3xl font-borna">
                 Connectez-vous!
               </Text>
-              <Text className="text-[#4D5962] text-xs text-center my-5">
+              <Text className="text-[#4D5962] text-xs leading-4 text-center my-5 font-worksans">
                 Heureux de vous revoir! Renseignez vos informations pour vous
                 connecter.
               </Text>
@@ -86,7 +134,7 @@ export default function AuthScreen() {
                     <TextInput
                       style={styles.input}
                       placeholder="Mail"
-                      placeholderTextColor="#999"
+                      placeholderTextColor="#859BAB"
                       value={email}
                       onChangeText={setEmail}
                       keyboardType="email-address"
@@ -102,7 +150,7 @@ export default function AuthScreen() {
                     <TextInput
                       style={styles.input}
                       placeholder="Mot de passe"
-                      placeholderTextColor="#999"
+                      placeholderTextColor="#859BAB"
                       value={password}
                       onChangeText={setPassword}
                       secureTextEntry={!showPassword}
@@ -149,7 +197,9 @@ export default function AuthScreen() {
             </View>
           </View>
           <View className="flex flex-row items-center justify-center mt-auto">
-            <Text className="text-[#4D5962]  text-xs">Vous êtes nouveau ? </Text>
+            <Text className="text-[#4D5962]  text-xs">
+              Vous êtes nouveau ?{" "}
+            </Text>
             <TouchableOpacity
               onPress={() => {
                 router.push("/register");
@@ -243,8 +293,8 @@ const styles = StyleSheet.create({
   },
   input: {
     flex: 1,
-    fontSize: 16,
-    color: "#333",
+    fontSize: 14,
+    fontFamily: "WorkSans",
   },
   eyeIcon: {
     padding: 5,
@@ -261,6 +311,7 @@ const styles = StyleSheet.create({
   forgotPasswordText: {
     fontSize: 14,
     color: "#587950",
+    fontFamily: "WorkSans",
   },
   loginButton: {
     borderRadius: 12,

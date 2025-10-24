@@ -182,10 +182,13 @@ module.exports = {
         },
       },
       fontFamily: {
-        heading: undefined,
-        body: undefined,
+        heading: ["Borna", "sans-serif"],
+        body: ["WorkSans", "sans-serif"],
         mono: undefined,
         roboto: ["Roboto", "sans-serif"],
+        borna: ["Borna", "sans-serif"],
+        worksans: ["WorkSans", "sans-serif"],
+        sans: ["WorkSans", "sans-serif"],
       },
       fontWeight: {
         extrablack: "950",

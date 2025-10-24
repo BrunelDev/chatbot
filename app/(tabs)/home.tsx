@@ -4,28 +4,35 @@ import { PrimaryHeader } from "@/components/headers/primaryHeader";
 import { Produit } from "@/components/produit";
 import { useUser } from "@/hooks/useUser";
 import accountService from "@/services/accountService";
+import marketplaceService, {
+  MarketplaceDashboardResponse,
+  MarketplaceProduct,
+} from "@/services/marketplaceService";
 import profileService, { HomeResponse } from "@/services/profile";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import { deleteAllUserData, deleteSessionData } from "@/utils/dataCleanup";
 import { Image } from "expo-image";
-import { router } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
+  ActivityIndicator,
   Alert,
   FlatList,
   Modal,
+  RefreshControl,
   ScrollView,
   Text,
   TouchableOpacity,
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useSession } from "../../ctx";
 
 export default function HomeScreen() {
+  const { signOut } = useSession();
+
   const handleLogout = async () => {
     try {
-      await AsyncStorage.removeItem("accessToken");
-      await AsyncStorage.removeItem("refreshToken");
-      router.replace("/(auth)/login");
+      await deleteSessionData();
+      signOut(); // Utilise le contexte d'authentification
       Alert.alert("Déconnexion", "Vous avez été déconnecté avec succès.");
     } catch (error) {
       console.error("Failed to logout:", error);
@@ -50,10 +57,9 @@ export default function HomeScreen() {
           onPress: async () => {
             try {
               const response = await accountService.deleteAccount();
+              await deleteAllUserData();
               Alert.alert("Suppression de compte réussie.", response.message);
-              await AsyncStorage.removeItem("accessToken");
-              await AsyncStorage.removeItem("refreshToken");
-              router.replace("/(auth)/login");
+              signOut(); // Utilise le contexte d'authentification
             } catch (error: any) {
               Alert.alert(
                 "Erreur",
@@ -111,24 +117,56 @@ export default function HomeScreen() {
   ];
   const [showTips, setShowTips] = useState(true);
   const [homeData, setHomeData] = useState<HomeResponse | null>(null);
+  const [marketplaceData, setMarketplaceData] =
+    useState<MarketplaceDashboardResponse | null>(null);
+  const [products, setProducts] = useState<MarketplaceProduct[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   useEffect(() => {
     const getHome = async () => {
       try {
+        setIsLoading(true);
         const response = await profileService.getHome();
         setHomeData(response);
+        const marketplaceResponse = await marketplaceService.getDashboard();
+        console.log(marketplaceResponse);
+        setMarketplaceData(marketplaceResponse);
+        setProducts(marketplaceResponse.recommendations);
       } catch (error) {
         Alert.alert(
           "Erreur",
           "Une erreur est survenue lors de la récupération des données."
         );
         console.error(error);
+      } finally {
+        setIsLoading(false);
       }
     };
     getHome();
   }, []);
+
+  const onRefresh = async () => {
+    try {
+      setIsRefreshing(true);
+      const response = await profileService.getHome();
+      setHomeData(response);
+      const marketplaceResponse = await marketplaceService.getDashboard();
+      console.log(marketplaceResponse);
+      setMarketplaceData(marketplaceResponse);
+      setProducts(marketplaceResponse.recommendations);
+    } catch (error) {
+      Alert.alert(
+        "Erreur",
+        "Une erreur est survenue lors de la récupération des données."
+      );
+      console.error(error);
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
   const [showCategoryList, setShowCategoryList] = useState(false);
-  const {user} = useUser();
+  const { user } = useUser();
 
   return (
     <View className="flex-1 bg-[#FEFDE8]">
@@ -138,46 +176,96 @@ export default function HomeScreen() {
         showsVerticalScrollIndicator={false}
         className="flex-1"
         contentContainerStyle={{ paddingBottom: 100 }}
+        refreshControl={
+          <RefreshControl
+            refreshing={isRefreshing}
+            onRefresh={onRefresh}
+            colors={["#587950"]}
+            tintColor="#587950"
+          />
+        }
       >
         <View className="flex-1 flex flex-col gap-5 px-4 mt-5">
           {/* Banner Ad */}
           <BannerAdComponent className="mb-0" />
-          <Text>Bonjour, {user?.user.username}</Text>
+          <Text className="font-medium text-[20px] text-envy-700 font-borna">
+            Bonjour {user?.user.username},
+          </Text>
+          <Text className="text-[16px] font-medium text-[#4D5962] font-borna">
+            {products.length > 0
+              ? "Produits conseillés"
+              : "Aucun produit conseillé"}
+          </Text>
 
-          
-         
+          {isLoading ? (
+            <View className="flex-1 justify-center items-center py-8">
+              <ActivityIndicator size="large" color="#587950" />
+              <Text className="text-[#4D5962] mt-4 font-worksans">
+                Chargement des produits...
+              </Text>
+            </View>
+          ) : (
+            <FlatList
+              data={products}
+              showsVerticalScrollIndicator={false}
+              renderItem={({ item }) => (
+                <Produit
+                  category={item.category || "Non catégorisé"}
+                  name={item.name}
+                  description={item.short_description.replace(/<[^>]*>/g, "")} // Remove HTML tags
+                  image={item.image}
+                  link={`/product/${item.slug}`}
+                  id={item.id.toString()}
+                  slug={item.slug}
+                />
+              )}
+              ItemSeparatorComponent={() => <View className="h-4" />}
+              ListEmptyComponent={() => (
+                <View className="flex-1 justify-center items-center py-8">
+                  <Text className="text-[#4D5962] text-center font-worksans">
+                    Aucun produit disponible
+                  </Text>
+                </View>
+              )}
+            />
+          )}
 
-          <FlatList
-            data={homeData?.recommended_products}
-            showsVerticalScrollIndicator={false}
-            style={{ width: "100%" }}
-            renderItem={({ item, index }) => (
-              <Produit
-                category={item.brand}
-                name={item.name}
-                description={item.description}
-                image={item.image}
-                link={"cheveuxcrepus.fr"}
-                id={item.id.toString()}
-              />
+          <Text className="text-lg font-medium text-[#4D5962] font-borna">
+            {homeData?.daily_tips && homeData.daily_tips.length > 0
+              ? "Astuces du jour"
+              : "Aucune astuce du jour"}
+          </Text>
 
-            )}
-            ItemSeparatorComponent={() => <View className="h-4" />}
-          />
-
-          <FlatList
-            data={homeData?.daily_tips}
-            showsVerticalScrollIndicator={false}
-            renderItem={({ item, index }) => (
-              <Tip
-                category={item.category}
-                title={item.title}
-                description={item.description}
-                link={"cheveuxcrepus.fr"}
-                id={index.toString()}
-              />
-            )}
-          />
+          {isLoading ? (
+            <View className="flex-1 justify-center items-center py-8">
+              <ActivityIndicator size="large" color="#587950" />
+              <Text className="text-[#4D5962] mt-4 font-worksans">
+                Chargement des astuces...
+              </Text>
+            </View>
+          ) : (
+            <FlatList
+              data={homeData?.daily_tips}
+              showsVerticalScrollIndicator={false}
+              renderItem={({ item, index }) => (
+                <Tip
+                  category={item.category}
+                  title={item.title}
+                  description={item.description}
+                  link={"cheveuxcrepus.fr"}
+                  id={index.toString()}
+                />
+              )}
+              ItemSeparatorComponent={() => <View className="h-4" />}
+              ListEmptyComponent={() => (
+                <View className="flex-1 justify-center items-center py-8">
+                  <Text className="text-[#4D5962] text-center font-worksans">
+                    Aucune astuce disponible
+                  </Text>
+                </View>
+              )}
+            />
+          )}
         </View>
       </ScrollView>
       <CategoryModal
@@ -186,9 +274,12 @@ export default function HomeScreen() {
         selectedCategory={""}
         setSelectedCategory={function (): void {
           throw new Error("Function not implemented.");
-        } } setShowTips={function (show: boolean): void {
+        }}
+        setShowTips={function (show: boolean): void {
           throw new Error("Function not implemented.");
-        } } showTips={false}      />
+        }}
+        showTips={false}
+      />
     </View>
   );
 }
@@ -275,7 +366,7 @@ const CategoryModal = ({
       label: "Accessoires associés",
     },
   ];
-  
+
   return (
     <Modal
       visible={showModal}
@@ -286,7 +377,6 @@ const CategoryModal = ({
         <SafeAreaView />
         <PrimaryHeader />
         <View className="flex-1 px-4 mt-5">
-        
           <View className="flex flex-row gap-x-2">
             <Onglet
               label={"Produits"}

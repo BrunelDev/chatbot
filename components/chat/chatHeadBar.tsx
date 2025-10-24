@@ -22,20 +22,15 @@ export function ChatHeadBar({ onMenuPress }: ChatHeadBarProps) {
         />
       </TouchableOpacity>
       <View className="flex-row items-center gap-x-2">
-      <Image
+        <Image
           source={require("../../assets/images/chatbot.png")}
           style={{ width: 40, height: 40 }}
         />
-      <Text className="text-[#4D5962] text-[16px]  font-medium">
-        Cheveux texturé AI
-      </Text>
+        <Text className="text-[#4D5962] text-[16px]  font-medium">
+          Cheveux texturé AI
+        </Text>
       </View>
-      <TouchableOpacity onPress={onMenuPress}>
-        <Image
-          source={require("../../assets/icons/ellipsis.svg")}
-          style={{ width: 24, height: 24 }}
-        />
-      </TouchableOpacity>
+      <TouchableOpacity onPress={onMenuPress}></TouchableOpacity>
     </View>
   );
 }

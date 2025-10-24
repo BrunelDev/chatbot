@@ -2,16 +2,20 @@ import { PrimaryButton } from "@/components/buttons/primaryButton";
 import { GoBack } from "@/components/headers/goBack";
 import { useImagePicker } from "@/hooks/useImagePicker";
 import { useUser } from "@/hooks/useUser";
+import accountService from "@/services/accountService";
+import { deleteAllUserData, deleteSessionData } from "@/utils/dataCleanup";
 import BottomSheet, {
   BottomSheetBackdrop,
   BottomSheetView,
 } from "@gorhom/bottom-sheet";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Image } from "expo-image";
 import { router } from "expo-router";
+import * as WebBrowser from "expo-web-browser";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   Alert,
+  Linking,
+  ScrollView,
   Text,
   TouchableOpacity,
   useWindowDimensions,
@@ -19,31 +23,43 @@ import {
 } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useSession } from "../../ctx";
 
 export default function Profile() {
   const { height } = useWindowDimensions();
   const { user } = useUser();
   const { selectAndSaveImage, getImageUri } = useImagePicker();
+  const { signOut } = useSession();
   const [profileImageUri, setProfileImageUri] = useState<string | null>(null);
   const options: {
     title: string;
-    href: "/(auth)/forgetPassword";
+    href: string;
     icon: string;
+    extern?: boolean;
   }[] = [
     {
       title: "Mot de passe",
       href: "/(auth)/forgetPassword",
       icon: require("../../assets/icons/lock.svg"),
+      extern: false,
     },
     {
       title: "Assistance client",
-      href: "/(auth)/forgetPassword",
+      href: "mailto:contact@cheveuxtextures.com",
       icon: require("../../assets/icons/message-question.svg"),
+      extern: true,
     },
     {
       title: "Sécurité et confidentialité",
-      href: "/(auth)/forgetPassword",
+      href: "https://cheveuxtextures.com/politique-de-confidentialite/",
       icon: require("../../assets/icons/shield.svg"),
+      extern: true,
+    },
+    {
+      title: "Conditions générales d'utilisation",
+      href: "https://cheveuxtextures.com/conditions-generales-dutilisation/",
+      icon: require("../../assets/icons/cgu.svg"),
+      extern: true,
     },
   ];
 
@@ -90,12 +106,8 @@ export default function Profile() {
         {
           text: "Se déconnecter",
           onPress: async () => {
-            await AsyncStorage.multiRemove([
-              "accountType",
-              "isOnboardingComplete",
-              "userInfo",
-            ]);
-            router.replace("/(auth)/login");
+            await deleteSessionData();
+            signOut(); // Utilise le contexte d'authentification
           },
         },
       ]
@@ -104,17 +116,17 @@ export default function Profile() {
 
   const handleDeleteAccount = async () => {
     try {
-      //await deleteAccount();
+      // Supprimer le compte côté serveur
+      await accountService.deleteAccount();
+
+      // Supprimer toutes les données locales
+      await deleteAllUserData();
+
       Alert.alert("Succès", "Votre compte a été supprimé avec succès.", [
         {
           text: "OK",
           onPress: async () => {
-            await AsyncStorage.multiRemove([
-              "accountType",
-              "isOnboardingComplete",
-              "userInfo",
-            ]);
-            router.replace("/(auth)/register");
+            signOut(); // Utilise le contexte d'authentification
           },
         },
       ]);
@@ -144,50 +156,54 @@ export default function Profile() {
   );
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <View className="bg-candlelight-50 h-full w-full">
-        <View
-          className="px-4 bg-envy-200"
-          style={{
-            height: height * 0.45,
-          }}
-        >
-          <SafeAreaView />
+      <View
+        className="px-4 bg-envy-200"
+        style={{
+          height: height * 0.45,
+        }}
+      >
+        <SafeAreaView />
 
-          <GoBack title="Profil" />
+        <GoBack title="Profil" />
 
-          <View className="flex flex-1 flex-col items-center justify-center">
-            <View>
-              <View className="w-[140px] h-[140px] rounded-full overflow-hidden border-2 border-envy-400 mb-2">
-                <Image
-                  source={
-                    profileImageUri
-                      ? { uri: profileImageUri }
-                      : require("../../assets/images/userProfile-img.png")
-                  }
-                  style={{ width: 140, height: 140 }}
-                  contentFit="cover"
-                />
-              </View>
-              <TouchableOpacity
-                className="flex items-center justify-center w-[36px] h-[36px] bg-candlelight-100 rounded-full border border-envy-400 absolute bottom-0 right-0"
-                onPress={handleImageSelection}
-                activeOpacity={0.7}
-              >
-                <Image
-                  source={require("../../assets/icons/image.svg")}
-                  style={{ width: 16, height: 16 }}
-                />
-              </TouchableOpacity>
+        <View className="flex flex-1 flex-col items-center justify-center">
+          <View>
+            <View className="w-[140px] h-[140px] rounded-full overflow-hidden border-2 border-envy-400 mb-2">
+              <Image
+                key={profileImageUri || "default"} // Force la mise à jour de l'image
+                source={
+                  profileImageUri
+                    ? { uri: profileImageUri }
+                    : require("../../assets/images/userProfile-img.png")
+                }
+                style={{ width: 140, height: 140 }}
+                contentFit="cover"
+              />
             </View>
-
-            <Text className="text-envy-700 text-xl font-medium">
-              {user?.user.username}
-            </Text>
-
-            <Text className="text-[#4D5962] text-sm ">{user?.user.email}</Text>
+            <TouchableOpacity
+              className="flex items-center justify-center w-[36px] h-[36px] bg-candlelight-100 rounded-full border border-envy-400 absolute bottom-0 right-0"
+              onPress={handleImageSelection}
+              activeOpacity={0.7}
+            >
+              <Image
+                source={require("../../assets/icons/image.svg")}
+                style={{ width: 16, height: 16 }}
+              />
+            </TouchableOpacity>
           </View>
-        </View>
 
+          <Text className="text-envy-700 text-xl font-medium font-borna">
+            {user?.user.username}
+          </Text>
+
+          <Text className="text-[#4D5962] text-sm ">{user?.user.email}</Text>
+        </View>
+      </View>
+      <ScrollView
+        className="bg-candlelight-50 flex-1 w-full"
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ flexGrow: 1, paddingBottom: 50 }}
+      >
         <View className="px-4 mt-6 flex flex-col gap-10">
           <TouchableOpacity
             className="bg-candlelight-100 h-[60px] flex flex-row items-center justify-between px-4 rounded-xl"
@@ -206,6 +222,7 @@ export default function Profile() {
               style={{ width: 20, height: 20 }}
             />
           </TouchableOpacity>
+
           <View className="flex flex-col gap-y-6">
             {options.map((option, index) => (
               <Option
@@ -213,6 +230,7 @@ export default function Profile() {
                 title={option.title}
                 href={option.href}
                 icon={option.icon}
+                extern={option.extern}
               />
             ))}
           </View>
@@ -225,8 +243,8 @@ export default function Profile() {
                 source={require("../../assets/icons/logout.svg")}
                 style={{ width: 16, height: 16 }}
               />
-              <Text className="text-candlelight-700 text-sm font-medium">
-                Se deconnecter
+              <Text className="text-candlelight-700 font-borna text-sm font-medium">
+                Se déconnecter
               </Text>
             </View>
           </TouchableOpacity>
@@ -242,27 +260,27 @@ export default function Profile() {
             </Text>
           </TouchableOpacity>
         </View>
-      </View>
-      <BottomSheet
-        ref={bottomSheetRef}
-        index={-1} // Start closed
-        enablePanDownToClose={true}
-        onChange={handleSheetChanges}
-        snapPoints={[300]}
-        backdropComponent={renderBackdrop}
-        backgroundStyle={{
-          backgroundColor: "#FEFDE8",
-          borderTopLeftRadius: 20,
-          borderTopRightRadius: 20,
-        }}
-      >
-        <BottomSheetView style={{ flex: 1 }}>
-          <ConfirmDeletion
-            onDelete={handleDeleteAccount}
-            bottomSheetRef={bottomSheetRef}
-          />
-        </BottomSheetView>
-      </BottomSheet>
+        <BottomSheet
+          ref={bottomSheetRef}
+          index={-1} // Start closed
+          enablePanDownToClose={true}
+          onChange={handleSheetChanges}
+          snapPoints={[300]}
+          backdropComponent={renderBackdrop}
+          backgroundStyle={{
+            backgroundColor: "#FEFDE8",
+            borderTopLeftRadius: 20,
+            borderTopRightRadius: 20,
+          }}
+        >
+          <BottomSheetView style={{ flex: 1 }}>
+            <ConfirmDeletion
+              onDelete={handleDeleteAccount}
+              bottomSheetRef={bottomSheetRef}
+            />
+          </BottomSheetView>
+        </BottomSheet>
+      </ScrollView>
     </GestureHandlerRootView>
   );
 }
@@ -271,14 +289,26 @@ const Option = ({
   title,
   href,
   icon,
+  extern,
 }: {
   title: string;
-  href: "/(auth)/forgetPassword";
+  href: string;
   icon: string;
+  extern?: boolean; // if true, the option will be opened in a web view
 }) => {
   return (
     <TouchableOpacity
-      onPress={() => router.push(href)}
+      onPress={async () => {
+        if (href.startsWith("mailto:") && extern) {
+          console.log("click");
+          await Linking.openURL(href);
+        } else if (extern) {
+          console.log(href);
+          await WebBrowser.openBrowserAsync(href);
+        } else {
+          router.push(href);
+        }
+      }}
       className="flex flex-row items-center justify-between pb-4 border-b border-envy-200 px-2"
     >
       <View className="flex flex-row items-center gap-x-3">
@@ -302,7 +332,7 @@ const ConfirmDeletion = ({
 }) => {
   return (
     <View className="flex flex-col h-fit gap-8 px-4 relative">
-      <Text className="text-xl font-black text-big_stone text-center">
+      <Text className="text-xl font-black text-big_stone text-center font-borna">
         Êtes-vous sûr de vouloir supprimer votre compte ?
       </Text>
       <Text className="text-gray-600">

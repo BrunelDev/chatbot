@@ -1,10 +1,15 @@
 import { PrimaryButton } from "@/components/buttons/primaryButton";
 import { GoBack } from "@/components/headers/goBack";
 import { SubTitle, Title } from "@/components/textComponents/title";
+import { HAIR_TYPE_CHOICES } from "@/context/useFormStore";
+import { useHairProfile } from "@/hooks/useHairProfile";
+import profileService from "@/services/profile";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Image } from "expo-image";
 import { router } from "expo-router";
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
+  ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
   SafeAreaView,
@@ -14,103 +19,49 @@ import {
   View,
 } from "react-native";
 
-type Option = {
-  key: string;
-  label: string;
-};
-
-const HAIR_TYPES: Option[] = [
-  { key: "dry", label: "Sec" },
-  { key: "oily", label: "Gras" },
-  { key: "normal", label: "Normal" },
-  { key: "combination", label: "Mixte" },
-];
-
-const SCALP_CONDITIONS: Option[] = [
-  { key: "dandruff", label: "Pellicules" },
-  { key: "itchy", label: "Démangeaisons" },
-  { key: "sensitive", label: "Sensible" },
-  { key: "normal", label: "Normal" },
-];
-
-const HAIR_GOALS: Option[] = [
-  { key: "growth", label: "Pousse" },
-  { key: "strength", label: "Force" },
-  { key: "shine", label: "Brillance" },
-  { key: "volume", label: "Volume" },
-  { key: "hydrate", label: "Hydratation" },
-];
-
-const ROUTINE_FREQ: Option[] = [
-  { key: "daily", label: "Quotidienne" },
-  { key: "2-3week", label: "2-3x/sem" },
-  { key: "weekly", label: "Hebdo" },
-  { key: "biweekly", label: "Bi-hebdo" },
-];
-
 export default function FormTwo() {
-  const [hairType, setHairType] = useState<string | null>(null);
-  const [scalpConditions, setScalpConditions] = useState<string[]>([]);
-  const [hairGoals, setHairGoals] = useState<string[]>([]);
-  const [routineFrequency, setRoutineFrequency] = useState<string | null>(null);
-  const [notes, setNotes] = useState<string>("");
+  const { hairProfile, setHairProfile, isLoading } = useHairProfile();
+  const [selectedHairType, setSelectedHairType] = useState<string | null>(null);
 
-  const toggleMulti = (
-    list: string[],
-    key: string,
-    setter: (v: string[]) => void
-  ) => {
-    if (list.includes(key)) {
-      setter(list.filter((k) => k !== key));
-    } else {
-      setter([...list, key]);
+  // Charger les données du profil existant
+  useEffect(() => {
+    if (hairProfile?.hair_type) {
+      setSelectedHairType(hairProfile.hair_type);
     }
-  };
+  }, [hairProfile]);
 
-  const isValid = useMemo(
-    () => !!hairType && !!routineFrequency,
-    [hairType, routineFrequency]
-  );
+  const isValid = useMemo(() => !!selectedHairType, [selectedHairType]);
 
-  const Chip = ({
-    active,
-    children,
-  }: {
-    active: boolean;
-    children: React.ReactNode;
-  }) => (
-    <View
-      className={`px-4 py-2 rounded-full border ${
-        active ? "bg-[#5879501A] border-[#587950]" : "border-gray-300"
-      }`}
-    >
-      <Text className={`${active ? "text-[#587950]" : "text-black"}`}>
-        {children}
-      </Text>
-    </View>
-  );
   const hairTypes = [
     {
       title: "Cheveux lisses",
-      value: "Pousse",
+      value: HAIR_TYPE_CHOICES.Lisse,
       image: require("../../assets/images/cheveux_lisses.png"),
     },
     {
       title: "Cheveux ondulés",
-      value: "Force",
+      value: HAIR_TYPE_CHOICES.Ondule,
       image: require("../../assets/images/cheveux_ondules.png"),
     },
     {
       title: "Cheveux bouclés",
-      value: "Brillance",
+      value: HAIR_TYPE_CHOICES.Boucle,
       image: require("../../assets/images/cheveux_boucles.png"),
     },
     {
       title: "Cheveux frisés à crépus",
-      value: "Volume",
+      value: HAIR_TYPE_CHOICES.FriseCrepus,
       image: require("../../assets/images/cheveux_crepus.png"),
     },
   ];
+
+  if (isLoading) {
+    return (
+      <View className="flex-1 justify-center items-center">
+        <ActivityIndicator color="green" size="large" />
+      </View>
+    );
+  }
 
   return (
     <KeyboardAvoidingView
@@ -131,6 +82,8 @@ export default function FormTwo() {
               value={hairType.value}
               image={hairType.image}
               key={hairType.value}
+              selectedHairType={selectedHairType}
+              setSelectedHairType={setSelectedHairType}
             />
           ))}
         </View>
@@ -139,7 +92,20 @@ export default function FormTwo() {
         <View className="absolute bottom-14 left-4 right-4">
           <PrimaryButton
             title="Enregistrer"
-            handlePress={() => router.back()}
+            showLoading={true}
+            loadingValue="Enregistrement..."
+            handlePress={async () => {
+              if (selectedHairType) {
+                const newProfile = await profileService.updateHairProfile({
+                  hair_type: selectedHairType,
+                });
+                await AsyncStorage.setItem(
+                  "hairProfile",
+                  JSON.stringify(newProfile)
+                );
+                router.back();
+              }
+            }}
           />
         </View>
       </View>
@@ -151,22 +117,27 @@ const HairType = ({
   title,
   value,
   image,
+  selectedHairType,
+  setSelectedHairType,
 }: {
   title: string;
   value: string;
   image: string;
+  selectedHairType: string | null;
+  setSelectedHairType: (value: string) => void;
 }) => {
-  const [active, setActive] = useState(false);
-  const { width, height } = useWindowDimensions();
+  const { width } = useWindowDimensions();
+  const isActive = selectedHairType === value;
+
   return (
     <TouchableOpacity
       activeOpacity={0.7}
       style={{
         width: width / 2 - 24,
       }}
-      onPress={() => setActive(!active)}
+      onPress={() => setSelectedHairType(value)}
       className={`flex flex-col gap-3 items-center justify-between pt-1 pb-3 px-1 rounded-xl ${
-        active ? "bg-envy-200" : "bg-envy-100"
+        isActive ? "bg-envy-200" : "bg-envy-100"
       }`}
     >
       <Image source={image} style={{ width: "100%", height: 170 }} />

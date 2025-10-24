@@ -2,32 +2,39 @@ import { PrimaryButton } from "@/components/buttons/primaryButton";
 import { GoBack } from "@/components/headers/goBack";
 import { Resume } from "@/components/resumeCapillaire";
 import { ResumeItem } from "@/components/resumeItem";
-import { router } from "expo-router";
-import React, { useEffect } from "react";
-import { SafeAreaView, View } from "react-native";
 import { useUser } from "@/hooks/useUser";
 import profileService, { BioProfileResponse } from "@/services/profile";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-
+import { router, useFocusEffect } from "expo-router";
+import React, { useCallback } from "react";
+import { ActivityIndicator, SafeAreaView, View } from "react-native";
 
 export default function ResumeCapillaire() {
   const { user } = useUser();
   const [hairProfile, setHairProfile] =
     React.useState<BioProfileResponse | null>(null);
-  useEffect(() => {
-    const getHairProfile = async () => {
-      try {
-        const response = await profileService.getBioProfile();
-        console.log("Bio profile response", response);
-        await AsyncStorage.setItem("hairProfile", JSON.stringify(response.hair_profile));
-        console.log(response);
-        setHairProfile(response);
-      } catch (error) {
-        console.error(error);
-      }
-    };
-    getHairProfile();
-  }, []);
+  const [loading, setLoading] = React.useState(true);
+  useFocusEffect(
+    useCallback(() => {
+      const getHairProfile = async () => {
+        try {
+          const response = await profileService.getBioProfile();
+          console.log("Bio profile response", response);
+          await AsyncStorage.setItem(
+            "hairProfile",
+            JSON.stringify(response.hair_profile)
+          );
+          console.log(response);
+          setHairProfile(response);
+        } catch (error) {
+          console.error(error);
+        } finally {
+          setLoading(false);
+        }
+      };
+      getHairProfile();
+    }, [])
+  );
   const items: {
     title: string;
     value: string;
@@ -41,17 +48,17 @@ export default function ResumeCapillaire() {
     {
       title: "Type de cheveux",
       value: hairProfile?.hair_profile.hair_type || "Inconnu",
-      href: "/profile/stepOne",
+      href: "/profile/stepTwo",
     },
     {
       title: "Longueur des cheveux",
       value: hairProfile?.hair_profile.hair_length || "Inconnu",
-      href: "/profile/stepTwo",
+      href: "/profile/stepThree",
     },
     {
       title: "Objectifs",
       value: hairProfile?.hair_profile.goals.join(", ") || "Inconnu",
-      href: "/profile/stepThree",
+      href: "/profile/stepOne",
     },
     {
       title: "Problèmes",
@@ -65,6 +72,14 @@ export default function ResumeCapillaire() {
     },
   ];
 
+  if (loading) {
+    return (
+      <View className="flex-1 justify-center items-center bg-candlelight-50">
+        <ActivityIndicator size="large" color="#C5A26F" />
+      </View>
+    );
+  }
+
   return (
     <View className="bg-candlelight-50 flex-1 w-full px-4">
       <SafeAreaView />
@@ -75,7 +90,7 @@ export default function ResumeCapillaire() {
           <ResumeItem
             key={item.title}
             title={item.title}
-            value={item.value}
+            value={item?.value?.split(", ")}
             href={item.href}
           />
         ))}

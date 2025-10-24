@@ -1,18 +1,19 @@
 import { GoBack } from "@/components/headers/goBack";
 import { SubTitle, Title } from "@/components/textComponents/title";
-import { useFormStore, HAIR_LENGTH_CHOICES } from "@/context/useFormStore";
-import WheelPicker from "@quidone/react-native-wheel-picker";
+import { HAIR_LENGTH_CHOICES, useFormStore } from "@/context/useFormStore";
+import { pickerStyle } from "@/styles/pickerStyle";
+import { Picker } from "@react-native-picker/picker";
 import { Image } from "expo-image";
 import { router } from "expo-router";
 import React from "react";
 import {
   KeyboardAvoidingView,
   Platform,
-  SafeAreaView,
   Text,
   TouchableOpacity,
   View,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 const hairHeightData = [
   { value: HAIR_LENGTH_CHOICES.TresCourts, label: "Très courts" },
@@ -37,10 +38,9 @@ export default function FormThree() {
           <Title title="Quelle est la longueur de vos cheveux ?" />
           <SubTitle title="Cette question nous permettra d’ adapter les conseils à la longueur (routines, produits, etc.)" />
         </View>
-        <WheelPicker
-          data={hairHeightData}
-          value={hairHeight || HAIR_LENGTH_CHOICES.TresCourts}
-          onValueChanged={({ item: { value } }) => {
+        <Picker
+          selectedValue={hairHeight || HAIR_LENGTH_CHOICES.TresCourts}
+          onValueChange={(value) => {
             switch (value) {
               case HAIR_LENGTH_CHOICES.TresCourts:
                 setFormData({ hairHeight: HAIR_LENGTH_CHOICES.TresCourts });
@@ -61,15 +61,16 @@ export default function FormThree() {
                 setFormData({ hairHeight: "" });
             }
           }}
-          enableScrollByTapOnItem={true}
-          itemTextStyle={{
-            color: "#121C12",
-            fontSize: 16,
-            fontWeight: "400",
-            lineHeight: 24,
-            paddingVertical: "auto",
-          }}
-        />
+          itemStyle={pickerStyle.pickerItem}
+        >
+          {hairHeightData.map((item) => (
+            <Picker.Item
+              key={item.value}
+              label={item.label}
+              value={item.value}
+            />
+          ))}
+        </Picker>
 
         {/* Sticky footer button */}
         <View className="absolute w-full bottom-10 left-4 flex flex-row items-center justify-between ">

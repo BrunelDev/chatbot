@@ -18,7 +18,7 @@ export default function SubscriptionModalDemo({}: SubscriptionModalDemoProps) {
 
   return (
     <View className="flex-1 justify-center items-center bg-candlelight-50 p-4">
-      <Text className="text-2xl font-bold text-typography-black mb-8 text-center">
+      <Text className="text-2xl font-bold text-typography-black mb-8 text-center font-borna">
         Test Subscription Modal
       </Text>
 

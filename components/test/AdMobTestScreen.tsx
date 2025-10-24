@@ -41,7 +41,7 @@ export default function AdMobTestScreen() {
 
   return (
     <View className="flex-1 bg-candlelight-50 p-4">
-      <Text className="text-2xl font-bold text-center mb-8 text-typography-black">
+      <Text className="text-2xl font-bold text-center mb-8 text-typography-black font-borna">
         AdMob Test Screen
       </Text>
 
@@ -101,4 +101,3 @@ export default function AdMobTestScreen() {
     </View>
   );
 }
-

@@ -63,10 +63,48 @@ export const useImagePicker = () => {
     }
   };
 
+  // Sélectionner une image pour le chat (sans édition forcée)
+  const pickImageForChat = async (): Promise<{
+    uri: string;
+    name: string;
+    size: number;
+  } | null> => {
+    try {
+      const hasPermission = await requestPermissions();
+      if (!hasPermission) return null;
+
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: false, // Pas d'édition forcée pour le chat
+        quality: 0.8,
+        base64: false,
+      });
+
+      if (result.canceled || !result.assets || result.assets.length === 0) {
+        return null;
+      }
+
+      const selectedImage = result.assets[0];
+      return {
+        uri: selectedImage.uri,
+        name: selectedImage.fileName || "image.jpg",
+        size: selectedImage.fileSize || 0,
+      };
+    } catch (error) {
+      console.error("Erreur lors de la sélection de l'image:", error);
+      Alert.alert(
+        "Erreur",
+        "Impossible de sélectionner l'image. Veuillez réessayer.",
+        [{ text: "OK" }]
+      );
+      return null;
+    }
+  };
+
   // Sauvegarder l'image localement
   const saveImageLocally = async (
     imageUri: string,
-    fileName: string = "profile_image.jpg"
+    fileName?: string
   ): Promise<string | null> => {
     try {
       // Utiliser l'ancienne API pour plus de compatibilité
@@ -80,8 +118,26 @@ export const useImagePicker = () => {
         });
       }
 
-      // Chemin de destination
-      const localUri = `${appDirectory}${fileName}`;
+      // Générer un nom de fichier unique avec timestamp
+      const timestamp = Date.now();
+      const finalFileName = fileName || `profile_image_${timestamp}.jpg`;
+      const localUri = `${appDirectory}${finalFileName}`;
+
+      // Supprimer l'ancienne image de profil si elle existe
+      const oldImageUri = await getImageUri();
+      if (oldImageUri) {
+        try {
+          const oldFileInfo = await FileSystem.getInfoAsync(oldImageUri);
+          if (oldFileInfo.exists) {
+            await FileSystem.deleteAsync(oldImageUri);
+          }
+        } catch (deleteError) {
+          console.warn(
+            "Impossible de supprimer l'ancienne image:",
+            deleteError
+          );
+        }
+      }
 
       // Copier l'image vers le stockage local
       await FileSystem.copyAsync({
@@ -148,12 +204,18 @@ export const useImagePicker = () => {
       const selectedImageUri = await pickImageFromGallery();
       if (!selectedImageUri) return null;
 
+      // Supprimer l'ancienne image de profil avant de sauvegarder la nouvelle
+      await removeProfileImage();
+
       // Sauvegarder l'image localement
       const localImageUri = await saveImageLocally(selectedImageUri);
       if (!localImageUri) return null;
 
       // Sauvegarder l'URI dans AsyncStorage
       await saveImageUri(localImageUri);
+
+      // Nettoyer les anciennes images
+      await cleanupOldImages();
 
       return localImageUri;
     } catch (error) {
@@ -188,12 +250,45 @@ export const useImagePicker = () => {
     }
   };
 
+  // Fonction utilitaire pour nettoyer les anciennes images
+  const cleanupOldImages = async (): Promise<void> => {
+    try {
+      const appDirectory = `${FileSystem.documentDirectory}images/`;
+      const dirInfo = await FileSystem.getInfoAsync(appDirectory);
+
+      if (dirInfo.exists) {
+        const files = await FileSystem.readDirectoryAsync(appDirectory);
+        const profileImages = files.filter((file) =>
+          file.startsWith("profile_image_")
+        );
+
+        // Garder seulement les 3 images les plus récentes
+        if (profileImages.length > 3) {
+          const sortedImages = profileImages.sort().reverse();
+          const imagesToDelete = sortedImages.slice(3);
+
+          for (const image of imagesToDelete) {
+            try {
+              await FileSystem.deleteAsync(`${appDirectory}${image}`);
+            } catch (error) {
+              console.warn(`Impossible de supprimer ${image}:`, error);
+            }
+          }
+        }
+      }
+    } catch (error) {
+      console.warn("Erreur lors du nettoyage des anciennes images:", error);
+    }
+  };
+
   return {
     selectAndSaveImage,
     getImageUri,
     removeProfileImage,
     pickImageFromGallery,
+    pickImageForChat,
     saveImageLocally,
     saveImageUri,
+    cleanupOldImages,
   };
 };

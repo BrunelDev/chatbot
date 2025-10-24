@@ -23,6 +23,45 @@ export interface MarketplaceProduct {
   reason?: string; // Only present in recommendations endpoint
 }
 
+export interface ProductImage {
+  id: number;
+  url: string;
+  alt: string;
+}
+
+export interface ProductCategory {
+  id: number;
+  name: string;
+  slug: string;
+}
+
+export interface ProductDetail {
+  featured_image?: string;
+  id: number;
+  slug: string;
+  name: string;
+  description: string;
+  brand: string;
+  price: number;
+  sale_price?: number;
+  images: ProductImage[];
+  categories: ProductCategory[];
+  hair_types: string[];
+  hair_concerns: string[];
+  ingredients: string;
+  size: string;
+  in_stock: boolean;
+  stock_quantity: number;
+  rating_average: number;
+  rating_count: number;
+  is_featured: boolean;
+  created_at: string;
+  updated_at: string;
+  tags: string[];
+  key_benefits: string[];
+  how_to_use: string;
+}
+
 export interface MarketplaceDashboardResponse {
   user_info: MarketplaceUserInfo;
   categories: string[];
@@ -126,6 +165,21 @@ const marketplaceService = {
       return data;
     } catch (error) {
       throw handleApiError(error, `Failed to search products: ${query}`);
+    }
+  },
+
+  /**
+   * Get product details by slug
+   * @param slug - Product slug
+   */
+  getProductBySlug: async (slug: string): Promise<ProductDetail> => {
+    try {
+      const { data } = await apiClient.get<ProductDetail>(
+        `/marketplace/products/${slug}/`
+      );
+      return data;
+    } catch (error) {
+      throw handleApiError(error, `Failed to load product details: ${slug}`);
     }
   },
 };

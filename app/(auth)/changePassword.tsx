@@ -18,8 +18,9 @@ import {
 } from "react-native";
 
 import { PrimaryButton } from "@/components/buttons/primaryButton";
+import { GoBack } from "@/components/headers/goBack";
 import { router, useLocalSearchParams } from "expo-router";
-import { ArrowLeft, Eye, EyeOff, Lock } from "lucide-react-native";
+import { Eye, EyeOff, Lock } from "lucide-react-native";
 
 const { width, height } = Dimensions.get("window");
 
@@ -29,8 +30,6 @@ export default function AuthScreen() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-
-  const handleBack = () => {};
 
   const togglePasswordVisibility = () => {
     setShowPassword(!showPassword);
@@ -82,20 +81,17 @@ export default function AuthScreen() {
             style={styles.keyboardView}
           >
             {/* Header */}
-            <View style={styles.header}>
-              <TouchableOpacity onPress={handleBack} style={styles.backButton}>
-                <ArrowLeft color="#333" size={24} />
-              </TouchableOpacity>
-              <View style={styles.placeholder} />
+            <View className="px-4">
+              <GoBack />
             </View>
 
             {/* Content */}
-            <View style={styles.content}>
-              <View style={styles.formContainer}>
-                <Text style={styles.title} className="text-[#88540B] font-medium">
+            <View className="px-4">
+              <View>
+                <Text className="text-[#88540B] font-medium mt-10 text-center text-3xl font-borna">
                   Changer de mot de passe
                 </Text>
-                <Text style={styles.subtitle}>
+                <Text className="text-[#4D5962] text-xs leading-4 text-center my-5 font-worksans">
                   Au moins 8 caractères, avec des majuscules, des minuscules et
                   des caractères spéciaux.
                 </Text>
@@ -104,11 +100,11 @@ export default function AuthScreen() {
                   {/* Password Input */}
                   <View style={styles.inputContainer}>
                     <View style={styles.inputWrapper}>
-                      <Lock style={styles.inputIcon} size={18} />
+                      <Lock style={styles.inputIcon} />
                       <TextInput
                         style={styles.input}
                         placeholder="Mot de passe"
-                        placeholderTextColor="#999"
+                        placeholderTextColor="#859BAB"
                         value={password}
                         onChangeText={setPassword}
                         secureTextEntry={!showPassword}
@@ -117,7 +113,7 @@ export default function AuthScreen() {
                         onPress={togglePasswordVisibility}
                         style={styles.eyeIcon}
                       >
-                        {showPassword ? (
+                        {!showPassword ? (
                           <EyeOff color="#333" size={18} />
                         ) : (
                           <Eye color="#333" size={18} />
@@ -126,14 +122,14 @@ export default function AuthScreen() {
                     </View>
                   </View>
 
-                  {/* Password Input */}
+                  {/* Confirm Password Input */}
                   <View style={styles.inputContainer}>
                     <View style={styles.inputWrapper}>
-                      <Lock style={styles.inputIcon} size={18} />
+                      <Lock style={styles.inputIcon} />
                       <TextInput
                         style={styles.input}
                         placeholder="Confirmer le mot de passe"
-                        placeholderTextColor="#999"
+                        placeholderTextColor="#859BAB"
                         value={confirmPassword}
                         onChangeText={setConfirmPassword}
                         secureTextEntry={!showConfirmPassword}
@@ -142,7 +138,7 @@ export default function AuthScreen() {
                         onPress={toggleConfirmPasswordVisibility}
                         style={styles.eyeIcon}
                       >
-                        {showConfirmPassword ? (
+                        {!showConfirmPassword ? (
                           <EyeOff color="#333" size={18} />
                         ) : (
                           <Eye color="#333" size={18} />
@@ -151,20 +147,18 @@ export default function AuthScreen() {
                     </View>
                   </View>
 
-                  {/* Login Button */}
+                  {/* Change Password Button */}
+                  <PrimaryButton
+                    title="Enregistrer le mot de passe"
+                    handlePress={handleForgetPassword}
+                    disabled={!confirmPassword || !password}
+                    showLoading={true}
+                    loadingValue="Enregistrement en cours..."
+                  />
                 </View>
               </View>
             </View>
           </KeyboardAvoidingView>
-          <View className="px-4 mb-4">
-            <PrimaryButton
-              title="Enregistrer le mot de passe"
-              handlePress={handleForgetPassword}
-              disabled={!confirmPassword || !password}
-              showLoading={true}
-              loadingValue="Enregistrement en cours..."
-            />
-          </View>
         </SafeAreaView>
       </View>
     </TouchableWithoutFeedback>
@@ -172,61 +166,11 @@ export default function AuthScreen() {
 }
 
 const styles = StyleSheet.create({
-  backgroundImage: {
-    flex: 1,
-    width: width,
-    height: height,
-  },
   container: {
     flex: 1,
   },
   keyboardView: {
     flex: 1,
-  },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: 20,
-    paddingTop: 10,
-    paddingBottom: 20,
-  },
-  backButton: {
-    width: 40,
-    height: 40,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: "600",
-    color: "#333",
-  },
-  placeholder: {
-    width: 40,
-  },
-  content: {
-    flex: 1,
-  },
-  formContainer: {
-    borderTopLeftRadius: 30,
-    borderTopRightRadius: 30,
-    paddingHorizontal: 30,
-    paddingTop: 40,
-    paddingBottom: 50,
-    minHeight: height * 0.6,
-  },
-  title: {
-    fontSize: 28,
-    marginBottom: 10,
-    textAlign: "center",
-  },
-  subtitle: {
-    fontSize: 16,
-    textAlign: "center",
-    marginBottom: 40,
-    lineHeight: 22,
   },
   form: {
     gap: 20,
@@ -249,46 +193,10 @@ const styles = StyleSheet.create({
   },
   input: {
     flex: 1,
-    fontSize: 16,
-    color: "#333",
+    fontSize: 14,
+    fontFamily: "WorkSans",
   },
   eyeIcon: {
     padding: 5,
-  },
-  eyeIconText: {
-    fontSize: 18,
-    color: "#666",
-  },
-  forgotPassword: {
-    alignSelf: "flex-end",
-    marginTop: -10,
-    marginBottom: 10,
-  },
-  forgotPasswordText: {
-    fontSize: 14,
-    color: "#666",
-  },
-  loginButton: {
-    borderRadius: 12,
-    paddingVertical: 18,
-    alignItems: "center",
-    marginTop: 10,
-  },
-  loginButtonText: {
-    color: "#fff",
-    fontSize: 16,
-    fontWeight: "600",
-  },
-  signupContainer: {
-    flexDirection: "row",
-    justifyContent: "center",
-    alignItems: "center",
-    marginTop: 20,
-  },
-  signupText: {
-    fontSize: 14,
-  },
-  signupLink: {
-    fontSize: 14,
   },
 });

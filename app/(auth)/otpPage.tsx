@@ -14,11 +14,14 @@ import {
   View,
 } from "react-native";
 import { OtpInput } from "react-native-otp-entry";
+import { useSession } from "../../ctx";
 export default function OtpPage() {
   const { source, email: emailFromParams } = useLocalSearchParams<{
     source: "email_verification" | "password_reset";
     email: string;
   }>();
+  const { signIn } = useSession();
+
   // User state from AsyncStorage might still be useful for display purposes or if emailFromParams is not available for some reason.
   const [user, setUser] = useState<AuthResponse | null>(null);
   useEffect(() => {
@@ -45,7 +48,7 @@ export default function OtpPage() {
 
     if (source === "email_verification") {
       await handleVerifyMail(effectiveEmail, code);
-      router.push("/(auth)/login");
+      // La redirection est maintenant gérée dans handleVerifyMail
     } else if (source === "password_reset") {
       // Navigate to a new page to set the new password
       // The actual API call to verify/reset password will happen on that new page
@@ -73,24 +76,38 @@ export default function OtpPage() {
     // This function is now specifically for email verification after registration
     try {
       const response = await accountService.verifyEmail({ email, code });
+
       if (user) {
         const tempUser = user;
         tempUser.access = response.access;
         tempUser.refresh = response.refresh;
         setUser(tempUser);
-      }
 
-      if (user) {
-        // Ensure user is not null before stringifying
-        await AsyncStorage.setItem("userInfo", JSON.stringify(user));
-        router.push("/(auth)/login"); // Or wherever users go after email verification
+        // Créer une session pour le contexte d'authentification
+        const sessionData = JSON.stringify({
+          access: response.access,
+          refresh: response.refresh,
+          user: tempUser.user,
+        });
+
+        // Sign in avec la session
+        signIn(sessionData);
+
+        // Stocker aussi dans AsyncStorage pour compatibilité
+        await AsyncStorage.setItem("userInfo", JSON.stringify(tempUser));
+
+        // Rediriger vers l'app principal maintenant que l'utilisateur est connecté
+        router.replace("/(tabs)/home");
       } else {
-        // This case might happen if the user object wasn't properly set before calling handleVerifyMail
-        // which could be an issue if emailFromParams was used and user state wasn't fully synced.
-        // For registration, the user object should ideally be formed from the registration response + tokens from VerifyMail.
-        console.warn(
-          "User object was null, could not save to AsyncStorage after verification. Consider creating/updating user object here."
-        );
+        // Si pas d'utilisateur stocké, créer une session basique
+        const sessionData = JSON.stringify({
+          access: response.access,
+          refresh: response.refresh,
+          user: { email: email },
+        });
+
+        signIn(sessionData);
+        router.replace("/(auth)/login");
       }
     } catch (error) {
       Alert.alert("Échec de vérification");
@@ -108,7 +125,7 @@ export default function OtpPage() {
           <GoBack />
           <SafeAreaView />
 
-          <Text className="text-[#88540B] font-medium text-4xl">
+          <Text className="text-[#88540B] font-medium text-4xl font-borna">
             Code de vérification
           </Text>
           <Text>
@@ -151,7 +168,7 @@ export default function OtpPage() {
               Vous n&apos;avez pas de code ?
             </Text>
             <Text
-              className="text-[#A46C04]"
+              className="text-[#A46C04] font-borna"
               onPress={async () => {
                 if (!effectiveEmail) {
                   Alert.alert(

@@ -1,8 +1,7 @@
+import { Image } from "expo-image";
 import { router } from "expo-router";
-import { CheckCircle2 } from "lucide-react-native";
 import React from "react";
 import { SafeAreaView, Text, TouchableOpacity, View } from "react-native";
-import { Image } from "expo-image";
 
 const PasswordUpdatedScreen = () => {
   return (
@@ -13,7 +12,7 @@ const PasswordUpdatedScreen = () => {
           source={require("../../assets/icons/Successmark.svg")}
           className="w-24 h-24 mb-8"
         />
-        <Text className="text-2xl font-bold text-[#88540B] mt-8">
+        <Text className="text-2xl font-bold text-[#88540B] mt-8 font-borna">
           Mot de passe modifié
         </Text>
         <Text className="text-center text-gray-500 mt-2 text-base">

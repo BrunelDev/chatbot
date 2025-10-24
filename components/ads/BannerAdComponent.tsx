@@ -1,6 +1,6 @@
 import AdMobService from "@/services/adMobService";
 import React, { useEffect, useState } from "react";
-import { View } from "react-native";
+import { useWindowDimensions, View } from "react-native";
 import {
   BannerAd,
   BannerAdSize,
@@ -28,12 +28,12 @@ export default function BannerAdComponent({
     // Replace with your actual ad unit ID for production
     setAdUnitId(TestIds.BANNER);
   }, []);
-
+const {width, height} = useWindowDimensions()
   return (
-    <View className={`bg-gray-100 ${className}`} style={style}>
+    <View className={`bg-gray-100 flex justify-center ${className}`} style={style}>
       <BannerAd
         unitId={adUnitId}
-        size={size}
+        size={`${width-32}x${50}`}
         requestOptions={{
           requestNonPersonalizedAdsOnly: true,
         }}

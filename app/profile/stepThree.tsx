@@ -1,44 +1,34 @@
 import { PrimaryButton } from "@/components/buttons/primaryButton";
 import { GoBack } from "@/components/headers/goBack";
 import { SubTitle, Title } from "@/components/textComponents/title";
-import WheelPicker from "@quidone/react-native-wheel-picker";
+import { HAIR_LENGTH_CHOICES, useFormStore } from "@/context/useFormStore";
+import profileService from "@/services/profile";
+import { pickerStyle } from "@/styles/pickerStyle";
+import { Picker } from "@react-native-picker/picker";
 import { Image } from "expo-image";
 import { router } from "expo-router";
 import React, { useState } from "react";
 import {
   KeyboardAvoidingView,
   Platform,
-  SafeAreaView,
   Text,
   TouchableOpacity,
   useWindowDimensions,
   View,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function FormThree() {
   const [value, setValue] = useState("");
-  const hairHeight = [
-    {
-      value: "Très courts",
-      label: "Très courts",
-    },
-    {
-      value: "Courts",
-      label: "Courts",
-    },
-    {
-      value: "Mi-longs",
-      label: "Mi-longs",
-    },
-    {
-      value: "Longs",
-      label: "Longs",
-    },
-    {
-      value: "Très longs",
-      label: "Très longs",
-    },
+
+  const hairHeightData = [
+    { value: HAIR_LENGTH_CHOICES.TresCourts, label: "Très courts" },
+    { value: HAIR_LENGTH_CHOICES.Courts, label: "Courts" },
+    { value: HAIR_LENGTH_CHOICES.MiLongs, label: "Mi-longs" },
+    { value: HAIR_LENGTH_CHOICES.Longs, label: "Longs" },
+    { value: HAIR_LENGTH_CHOICES.TresLongs, label: "Très longs" },
   ];
+  const { hairHeight, setFormData } = useFormStore();
 
   return (
     <KeyboardAvoidingView
@@ -52,32 +42,52 @@ export default function FormThree() {
           <Title title="Quelle est la longueur de vos cheveux ?" />
           <SubTitle title="Cette question nous permettra d’ adapter les conseils à la longueur (routines, produits, etc.)" />
         </View>
-        <WheelPicker
-          data={hairHeight}
-          value={value}
-          onValueChanged={({ item: { value } }) => setValue(value)}
-          enableScrollByTapOnItem={true}
-          itemTextStyle={{
-            color: "#121C12",
-            fontSize: 16,
-            fontWeight: "400",
-            lineHeight: 24,
-            paddingVertical: "auto",
+        <Picker
+          itemStyle={pickerStyle.pickerItem}
+          selectedValue={hairHeight}
+          onValueChange={  (value)  => {
+            switch (value) {
+              case HAIR_LENGTH_CHOICES.TresCourts:
+                setFormData({ hairHeight: HAIR_LENGTH_CHOICES.TresCourts });
+                break;
+              case HAIR_LENGTH_CHOICES.Courts:
+                setFormData({ hairHeight: HAIR_LENGTH_CHOICES.Courts });
+                break;
+              case HAIR_LENGTH_CHOICES.MiLongs:
+                setFormData({ hairHeight: HAIR_LENGTH_CHOICES.MiLongs });
+                break;
+              case HAIR_LENGTH_CHOICES.Longs:
+                setFormData({ hairHeight: HAIR_LENGTH_CHOICES.Longs });
+                break;
+              case HAIR_LENGTH_CHOICES.TresLongs:
+                setFormData({ hairHeight: HAIR_LENGTH_CHOICES.TresLongs });
+                break;
+              default:
+                setFormData({ hairHeight: "" });
+            }
           }}
-        />
+        >
+          {hairHeightData.map((item) => (
+            <Picker.Item label={item.label} value={item.value} />
+          ))}
+        
+        </Picker>
+     
 
         {/* Sticky footer button */}
         <View className="absolute bottom-14 left-4 right-4">
-          <PrimaryButton
-            title="Enregister"
-            handlePress={() => router.back()}
-          />
+          <PrimaryButton title="Enregister" loadingValue="Enregistrement..." showLoading={true} handlePress={async () => {
+            if (hairHeight) {
+              console.log("hairHeight", hairHeight)
+              await profileService.updateHairProfile({ hair_length: hairHeight })
+            }
+            router.back()
+          }} />
         </View>
       </View>
     </KeyboardAvoidingView>
   );
 }
-
 const HairType = ({
   title,
   value,

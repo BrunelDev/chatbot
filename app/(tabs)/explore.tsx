@@ -1,20 +1,19 @@
 import { Tip } from "@/components/astuce";
 import { PrimaryHeader } from "@/components/headers/primaryHeader";
 import { Produit } from "@/components/produit";
-import accountService from "@/services/accountService";
 import marketplaceService, {
   MarketplaceDashboardResponse,
   MarketplaceProduct,
 } from "@/services/marketplaceService";
 import profileService, { HomeResponse } from "@/services/profile";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Image } from "expo-image";
-import { router } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
+  ActivityIndicator,
   Alert,
   FlatList,
   Modal,
+  RefreshControl,
   Text,
   TouchableOpacity,
   View,
@@ -22,94 +21,6 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function Explore() {
-  const handleLogout = async () => {
-    try {
-      await AsyncStorage.removeItem("accessToken");
-      await AsyncStorage.removeItem("refreshToken");
-      router.replace("/(auth)/login");
-      Alert.alert("Déconnexion", "Vous avez été déconnecté avec succès.");
-    } catch (error) {
-      console.error("Failed to logout:", error);
-      Alert.alert(
-        "Erreur",
-        "Une erreur est survenue lors de la déconnexion. Veuillez réessayer."
-      );
-    }
-  };
-
-  const handleDeleteAccount = () => {
-    Alert.alert(
-      "Supprimer le compte",
-      "Voulez-vous vraiment supprimer votre compte ? Cette action est irréversible.",
-      [
-        {
-          text: "Annuler",
-          style: "cancel",
-        },
-        {
-          text: "OK",
-          onPress: async () => {
-            try {
-              const response = await accountService.deleteAccount();
-              Alert.alert("Suppression de compte réussie.", response.message);
-              await AsyncStorage.removeItem("accessToken");
-              await AsyncStorage.removeItem("refreshToken");
-              router.replace("/(auth)/login");
-            } catch (error: any) {
-              Alert.alert(
-                "Erreur",
-                error.message ||
-                  "Une erreur est survenue lors de la suppression de votre compte."
-              );
-            }
-          },
-        },
-      ]
-    );
-  };
-
-  const tips = [
-    {
-      category: "Hydratation & soins",
-      title: "Astuces pour maintenir l’hydratation",
-      description:
-        "Eviter la sécheresse et sceller l’eau dans la fibre capillaire. Applique ton leave-in sur cheveux humides puis une huile légère pour sceller l’hydratation.",
-      link: "cheveuxcrepus.fr",
-      id: "1",
-    },
-    {
-      category: "Hydratation & soins",
-      title: "Astuces pour maintenir l’hydratation",
-      description:
-        "Eviter la sécheresse et sceller l’eau dans la fibre capillaire. Applique ton leave-in sur cheveux humides puis une huile légère pour sceller l’hydratation.",
-      link: "cheveuxcrepus.fr",
-      id: "2",
-    },
-    {
-      category: "Hydratation & soins",
-      title: "Astuces pour maintenir l’hydratation",
-      description:
-        "Eviter la sécheresse et sceller l’eau dans la fibre capillaire. Applique ton leave-in sur cheveux humides puis une huile légère pour sceller l’hydratation.",
-      link: "cheveuxcrepus.fr",
-      id: "3",
-    },
-    {
-      category: "Hydratation & soins",
-      title: "Astuces pour maintenir l’hydratation",
-      description:
-        "Eviter la sécheresse et sceller l’eau dans la fibre capillaire. Applique ton leave-in sur cheveux humides puis une huile légère pour sceller l’hydratation.",
-      link: "cheveuxcrepus.fr",
-      id: "4",
-    },
-    {
-      category: "Hydratation & soins",
-      title: "Astuces pour maintenir l’hydratation",
-      description:
-        "Eviter la sécheresse et sceller l’eau dans la fibre capillaire. Applique ton leave-in sur cheveux humides puis une huile légère pour sceller l’hydratation.",
-      link: "cheveuxcrepus.fr",
-      id: "5",
-    },
-  ];
   const [showTips, setShowTips] = useState(true);
   const [homeData, setHomeData] = useState<HomeResponse | null>(null);
   const [marketplaceData, setMarketplaceData] =
@@ -119,10 +30,13 @@ export default function Explore() {
   const [selectedCategory, setSelectedCategory] = useState(
     "Toutes les catégories"
   );
+  const [isLoading, setIsLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   useEffect(() => {
     const loadData = async () => {
       try {
+        setIsLoading(true);
         // Load marketplace dashboard data
         const marketplaceResponse = await marketplaceService.getDashboard();
         console.log(marketplaceResponse);
@@ -138,21 +52,47 @@ export default function Explore() {
           "Une erreur est survenue lors de la récupération des données."
         );
         console.error(error);
+      } finally {
+        setIsLoading(false);
       }
     };
     loadData();
   }, []);
 
-  // Load products when category changes
+  const onRefresh = async () => {
+    try {
+      setIsRefreshing(true);
+      // Load marketplace dashboard data
+      const marketplaceResponse = await marketplaceService.getDashboard();
+      console.log(marketplaceResponse);
+      setMarketplaceData(marketplaceResponse);
+      setProducts(marketplaceResponse.recommendations);
 
+      // Load home data for tips
+      const homeResponse = await profileService.getHome();
+      setHomeData(homeResponse);
+    } catch (error) {
+      Alert.alert(
+        "Erreur",
+        "Une erreur est survenue lors de la récupération des données."
+      );
+      console.error(error);
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
+
+  // Load products when category changes
 
   return (
     <View className="flex-1 bg-[#FEFDE8]">
       <SafeAreaView />
       <PrimaryHeader />
       <View className="flex-1 px-4 mt-5 gap-4">
-        <Text>Explorer</Text>
-        <Text>
+        <Text className="font-medium text-[20px] text-envy-700 font-borna">
+          Explorer
+        </Text>
+        <Text className="text-xs text-[#4D5962] font-worksans">
           Découvrez de nouvelles astuces et produits adaptés à ses cheveux.
         </Text>
         <View className="flex flex-row gap-x-2">
@@ -171,6 +111,9 @@ export default function Explore() {
             }}
           />
         </View>
+        <Text className="font-medium text-xl text-envy-700 font-borna">
+          Recommandés pour vous
+        </Text>
         <CategoryChooser
           selectedCategory={selectedCategory}
           setSelectedCategory={() => setShowCategoryModal(true)}
@@ -184,7 +127,14 @@ export default function Explore() {
           marketplaceData={marketplaceData}
         />
 
-        {showTips ? (
+        {isLoading ? (
+          <View className="flex-1 justify-center items-center">
+            <ActivityIndicator size="large" color="#587950" />
+            <Text className="text-[#4D5962] mt-4 font-worksans">
+              Chargement...
+            </Text>
+          </View>
+        ) : showTips ? (
           <FlatList
             data={homeData?.daily_tips}
             showsVerticalScrollIndicator={false}
@@ -197,10 +147,32 @@ export default function Explore() {
                 id={index.toString()}
               />
             )}
+            ItemSeparatorComponent={() => <View className="h-4" />}
+            ListEmptyComponent={() => (
+              <View className="flex-1 justify-center items-center py-8">
+                <Text className="text-[#4D5962] text-center font-worksans">
+                  Aucune astuce disponible
+                </Text>
+              </View>
+            )}
+            refreshControl={
+              <RefreshControl
+                refreshing={isRefreshing}
+                onRefresh={onRefresh}
+                colors={["#587950"]}
+                tintColor="#587950"
+              />
+            }
           />
         ) : (
           <FlatList
-            data={selectedCategory === "Toutes les catégories" ? products : products.filter((product) => product.category === selectedCategory)}
+            data={
+              selectedCategory === "Toutes les catégories"
+                ? products
+                : products.filter(
+                    (product) => product.category === selectedCategory
+                  )
+            }
             showsVerticalScrollIndicator={false}
             renderItem={({ item }) => (
               <Produit
@@ -210,8 +182,25 @@ export default function Explore() {
                 image={item.image}
                 link={`/product/${item.slug}`}
                 id={item.id.toString()}
+                slug={item.slug}
               />
             )}
+            ItemSeparatorComponent={() => <View className="h-4" />}
+            ListEmptyComponent={() => (
+              <View className="flex-1 justify-center items-center py-8">
+                <Text className="text-[#4D5962] text-center font-worksans">
+                  Aucun produit disponible
+                </Text>
+              </View>
+            )}
+            refreshControl={
+              <RefreshControl
+                refreshing={isRefreshing}
+                onRefresh={onRefresh}
+                colors={["#587950"]}
+                tintColor="#587950"
+              />
+            }
           />
         )}
       </View>
@@ -230,6 +219,7 @@ const Onglet = ({
 }) => {
   return (
     <TouchableOpacity
+      activeOpacity={1}
       onPress={handlePress}
       className={` rounded-full px-4 py-2   ${
         isActive
@@ -237,7 +227,7 @@ const Onglet = ({
           : "border border-[#AEC3CB]"
       }`}
     >
-      <Text>{label}</Text>
+      <Text className="font-worksans">{label}</Text>
     </TouchableOpacity>
   );
 };
@@ -254,7 +244,9 @@ const CategoryChooser = ({
       onPress={setSelectedCategory}
       className={`rounded-full px-4 py-2 border border-[#AEC3CB] flex flex-row justify-between items-center`}
     >
-      <Text>{selectedCategory}</Text>
+      <Text className="font-medium text-xs text-[#4D5962] font-worksans">
+        {selectedCategory}
+      </Text>
       <Image
         source={require("../../assets/icons/chevronDown.svg")}
         style={{ width: 10.560012817382812, height: 4.7316999435424805 }}
@@ -293,28 +285,38 @@ const CategoryModal = ({
       transparent={true}
       onRequestClose={() => setShowModal(false)}
     >
-      <View className="bg-[#FEFDE8] w-full rounded-3xl  p-6 shadow-lg mt-auto">
-        {categories.map((category, index) => (
-          <TouchableOpacity
-            key={index}
-            onPress={() => {
-              setSelectedCategory(category);
-              setShowModal(false);
-            }}
-            className={`py-3`}
-          >
-            <Text
-              className={`text-xs font-medium ${
-                index === 0
-                  ? "text-candlelight-700 font-semibold"
-                  : "text-[#4D5962]"
-              }`}
+      <TouchableOpacity
+        className="flex-1 justify-end"
+        activeOpacity={1}
+        onPress={() => setShowModal(false)}
+      >
+        <TouchableOpacity
+          activeOpacity={1}
+          onPress={() => {}} // Prevent closing when clicking on modal content
+          className="bg-[#FEFDE8] w-full rounded-3xl p-6 shadow-lg"
+        >
+          {categories.map((category, index) => (
+            <TouchableOpacity
+              key={index}
+              onPress={() => {
+                setSelectedCategory(category);
+                setShowModal(false);
+              }}
+              className={`py-3`}
             >
-              {category}
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </View>
+              <Text
+                className={`text-xs font-medium font-worksans ${
+                  index === 0
+                    ? "text-candlelight-700 font-semibold"
+                    : "text-[#4D5962]"
+                }`}
+              >
+                {category}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </TouchableOpacity>
+      </TouchableOpacity>
     </Modal>
   );
 };

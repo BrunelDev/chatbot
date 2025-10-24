@@ -47,7 +47,7 @@ export default function ForgotPassword() {
         <GoBack />
         <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
           <View className="flex-1 justify-center px-4 gap-y-10">
-            <Text className="text-[#88540B] font-medium text-4xl">
+            <Text className="text-[#88540B] font-medium text-4xl font-borna">
               Mot de passe oublié
             </Text>
             <Text>
@@ -82,7 +82,7 @@ export default function ForgotPassword() {
         <View className="px-4 pb-4 mt-20">
           <PrimaryButton
             title={"Envoyer le code de vérification"}
-            handlePress={async() => {
+            handlePress={async () => {
               await handleRequestPasswordReset();
             }}
             showLoading={true}

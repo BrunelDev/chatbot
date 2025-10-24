@@ -87,8 +87,10 @@ export default function PremiumSubscriptionModal({
 
                 {/* Price */}
                 <View className="mb-6 flex-row items-center gap-2">
-                  <Text className="text-envy-500 text-4xl font-medium">$5</Text>
-                  <Text className="text-xl font-medium text-envy-500">
+                  <Text className="text-envy-500 text-4xl font-medium font-borna">
+                    $5
+                  </Text>
+                  <Text className="text-xl font-medium text-envy-500 font-borna">
                     / mois
                   </Text>
                 </View>

@@ -1,15 +1,15 @@
 import { ChatHeadBar } from "@/components/chat/chatHeadBar";
 import {
   createConversationSession,
+  getFullConversation,
   StartConversationPayload,
   startOrContinueConversation,
-  getFullConversation,
 } from "@/services/chatBotService";
 import { Chat, defaultTheme, MessageType } from "@flyerhq/react-native-chat-ui";
-import React, { ReactNode, useCallback, useEffect, useState } from "react";
-import { Text, View } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFocusEffect } from "expo-router";
+import React, { ReactNode, useCallback, useState } from "react";
+import { Text, View } from "react-native";
 
 const uuidv4 = () => {
   return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
@@ -49,7 +49,7 @@ const ChatPage = () => {
       >
         <Text
           style={{
-            fontFamily: "Urbanist",
+            fontFamily: "WorkSans",
             fontSize: 15,
             color: user.id !== message.author.id ? "#333" : "#000",
             lineHeight: 20,
@@ -170,7 +170,7 @@ const ChatPage = () => {
       <View className="flex-1">
         <Chat
           emptyState={() => (
-            <Text className="font-medium text-3xl text-envy-500">
+            <Text className="font-medium text-3xl text-envy-500 font-borna">
               Bonjour Emilie, je suis ton coach capillaire
             </Text>
           )}

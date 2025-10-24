@@ -1,5 +1,6 @@
 import { ChatHeadBar } from "@/components/chat/chatHeadBar";
 import PremiumSubscriptionModal from "@/components/modals/PremiumSubscriptionModal";
+import { useImagePicker } from "@/hooks/useImagePicker";
 import { useUser } from "@/hooks/useUser";
 import {
   createConversationSession,
@@ -8,11 +9,32 @@ import {
   startOrContinueConversation,
 } from "@/services/chatBotService";
 import InterstitialAdService from "@/services/interstitialAdService";
+import { uploadToSupabase } from "@/services/storage/uploadToSupabase";
 import { Chat, defaultTheme, MessageType } from "@flyerhq/react-native-chat-ui";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { Image } from "expo-image";
 import { useFocusEffect } from "expo-router";
-import React, { ReactNode, useCallback, useState } from "react";
-import { Text, View } from "react-native";
+import React, { ReactNode, useCallback, useEffect, useState } from "react";
+import {
+  Alert,
+  Text,
+  TouchableOpacity,
+  useWindowDimensions,
+  View,
+} from "react-native";
+import Purchases from "react-native-purchases";
+
+// Extension des types de messages pour inclure les messages avec image et texte
+type ExtendedMessageType =
+  | MessageType.Any
+  | {
+      id: string;
+      type: "image_with_text";
+      author: { id: string; imageUrl?: any };
+      text: string;
+      imageFile: string | null;
+      createdAt: number;
+    };
 
 const uuidv4 = () => {
   return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
@@ -25,53 +47,163 @@ const uuidv4 = () => {
 const Chatbot = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [currentChatId, setCurrentChatId] = useState<string | undefined>();
-  const [messages, setMessages] = useState<MessageType.Any[]>([]);
-  const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
+  // Fonction pour convertir ExtendedMessageType en MessageType.Any pour le composant Chat
+  const convertToChatMessages = (
+    messages: ExtendedMessageType[]
+  ): MessageType.Any[] => {
+    return messages.map((message) => {
+      if (message.type === "image_with_text") {
+        // Pour les messages avec image et texte, on les traite comme des messages texte
+        return {
+          id: message.id,
+          type: "text" as const,
+          author: message.author,
+          text: message.text,
+          createdAt: message.createdAt,
+        };
+      }
+      return message as MessageType.Any;
+    });
+  };
+  const [messages, setMessages] = useState<ExtendedMessageType[]>([]);
+  const [showSubscriptionModal, setShowSubscriptionModal] = useState(true);
+  const [isPremium, setIsPremium] = useState(false);
+  const [selectedImage, setSelectedImage] = useState<{
+    uri: string;
+    name: string;
+    size: number;
+  } | null>(null);
   const { user: userData } = useUser();
-  /**
-   * createdAt?: number;
-       firstName?: string;
-       id: string;
-       imageUrl?: ImageURISource['uri'];
-       lastName?: string;
-       lastSeen?: number;
-       metadata?: Record<string, any>;
-       role?: 'admin' | 'agent' | 'moderator' | 'user';
-       updatedAt?: number;
-   */
+  const { pickImageForChat } = useImagePicker();
+
   const user = {
     id: "06c33e8b-e835-4736-80f4-63f44b66666c",
     imageUrl: require("@/assets/images/userProfile-img.png"),
   };
 
-  const renderBubble = ({
+  // ✅ Vérifier le statut premium au chargement
+  useEffect(() => {
+    checkPremiumStatus();
+  }, []);
+
+  const checkPremiumStatus = async () => {
+    try {
+      const customerInfo = await Purchases.getCustomerInfo();
+      const isPremiumUser =
+        typeof customerInfo.entitlements.active["premium"] !== "undefined";
+      setIsPremium(isPremiumUser);
+      console.log("Premium status:", isPremiumUser);
+    } catch (error) {
+      console.error("Error checking premium status:", error);
+    }
+  };
+
+  const renderBubbleAdvanced = ({
     child,
     message,
     nextMessageInGroup,
   }: {
     child: ReactNode;
-    message: MessageType.Any;
+    message: ExtendedMessageType;
     nextMessageInGroup: boolean;
   }) => {
+    const isUserMessage = user.id === message.author.id;
+    const isImageMessage = message.type === "image";
+    const isTextMessage = message.type === "text";
+    const isImageWithTextMessage = message.type === "image_with_text";
+
     return (
       <View
         style={{
-          backgroundColor:
-            user.id !== message.author.id ? "transparent" : "#FFFDC2",
+          backgroundColor: isUserMessage ? "#FFFDC2" : "transparent",
           borderColor: "transparent",
           borderWidth: 0,
           overflow: "hidden",
+          maxWidth: isImageMessage || isImageWithTextMessage ? 250 : undefined,
         }}
         className={`${
-          user.id !== message.author.id ? "rounded-none" : "rounded-2xl"
-        }  text-international_orange-200 px-2 py-3`}
+          isUserMessage ? "rounded-2xl" : "rounded-none"
+        } text-international_orange-200`}
       >
-        <Text className="text-[#4D5962] text-[12px]">
-          {message.type === "text" ? message.text : child}
-        </Text>
+        {isImageWithTextMessage ? (
+          <View className="flex gap-2">
+            <View className="px-2 py-3">
+              {/* Texte au-dessus de l'image */}
+              <Text className="text-[#4D5962] text-[14px] font-worksans mb-2">
+                {message.text || ""}
+              </Text>
+            </View>
+            {/* Image */}
+            <View
+              className={`${
+                isUserMessage ? "rounded-xl" : "rounded-lg"
+              } overflow-hidden`}
+            >
+              <View style={{ position: "relative" }}>
+                <Image
+                  source={{ uri: message.imageFile || "" }}
+                  style={{
+                    width: width - 32,
+                    height: width / 1.5,
+                    borderRadius: 8,
+                  }}
+                />
+                {isUserMessage && (
+                  <View
+                    style={{
+                      position: "absolute",
+                      bottom: 4,
+                      right: 4,
+                      backgroundColor: "rgba(0,0,0,0.6)",
+                      borderRadius: 8,
+                      paddingHorizontal: 6,
+                      paddingVertical: 2,
+                    }}
+                  >
+                    <Text style={{ color: "white", fontSize: 10 }}>📷</Text>
+                  </View>
+                )}
+              </View>
+            </View>
+          </View>
+        ) : isImageMessage ? (
+          <View
+            className={`${
+              isUserMessage ? "rounded-xl" : "rounded-lg"
+            } overflow-hidden`}
+          >
+            <View style={{ position: "relative" }}>
+              {child}
+              {isUserMessage && (
+                <View
+                  style={{
+                    position: "absolute",
+                    bottom: 4,
+                    right: 4,
+                    backgroundColor: "rgba(0,0,0,0.6)",
+                    borderRadius: 8,
+                    paddingHorizontal: 6,
+                    paddingVertical: 2,
+                  }}
+                >
+                  <Text style={{ color: "white", fontSize: 10 }}>📷</Text>
+                </View>
+              )}
+            </View>
+          </View>
+        ) : isTextMessage ? (
+          <View className="px-2 py-3">
+            <Text className="text-[#4D5962] text-[14px] font-worksans">
+              {message.text || ""}
+            </Text>
+          </View>
+        ) : (
+          <View className="px-2 py-3">{child}</View>
+        )}
       </View>
     );
   };
+
   useFocusEffect(
     useCallback(() => {
       const loadChatId = async () => {
@@ -89,24 +221,16 @@ const Chatbot = () => {
           }
           if (chatId) {
             const conversation = await getFullConversation(chatId!);
-            console.log(conversation);
-            /**
-         *  author: User;
-                 createdAt?: number;
-                 id: string;
-                 metadata?: Record<string, any>;
-                 roomId?: string;
-                 status?: 'delivered' | 'error' | 'seen' | 'sending' | 'sent';
-                 type: 'custom' | 'file' | 'image' | 'text' | 'unsupported';
-                 updatedAt?: number;
-         */
+            console.log(conversation.messages);
             setMessages(
               conversation.messages.reverse().map((message) => ({
                 id: message.id.toString(),
-                type: "text",
+                type: message.image_file ? "image_with_text" : "text",
                 author:
                   message.message_type === "user" ? user : { id: "assistant" },
                 text: message.content,
+                imageFile: message.image_file,
+                createdAt: Date.now(),
               }))
             );
           }
@@ -116,24 +240,11 @@ const Chatbot = () => {
       };
       loadChatId();
 
-      // Load interstitial ad when chatbot screen is focused
       InterstitialAdService.loadAd();
     }, [])
   );
 
   const handleSendPress = async (message: MessageType.PartialText) => {
-    // Check if user is premium, if not show subscription modal
-    /*
-    if (
-      !userData?.user?.is_premium &&
-      !userData?.user?.can_use_premium_features
-    ) {
-      setShowSubscriptionModal(true);
-      return;
-    }
-    */
-
-    // Show interstitial ad occasionally (every 3rd message)
     const messageCount = messages.length;
     if (
       messageCount > 0 &&
@@ -144,7 +255,31 @@ const Chatbot = () => {
     }
 
     try {
-      // Add user message
+      let uploadedImageUrl: string | undefined;
+
+      if (selectedImage) {
+        uploadedImageUrl = await uploadToSupabase(selectedImage.uri, {
+          bucket: "bep-bucket",
+          path: `chat-conversation/user-${user?.id}`,
+          fileType: "image",
+        });
+      }
+
+      const messagesToAdd: ExtendedMessageType[] = [];
+
+      if (selectedImage && uploadedImageUrl) {
+        const imageMessage: MessageType.Image = {
+          author: user,
+          createdAt: Date.now(),
+          id: uuidv4(),
+          type: "image",
+          uri: uploadedImageUrl,
+          name: selectedImage.name,
+          size: selectedImage.size,
+        };
+        messagesToAdd.push(imageMessage);
+      }
+
       const textMessage: MessageType.Text = {
         author: user,
         createdAt: Date.now(),
@@ -152,20 +287,24 @@ const Chatbot = () => {
         text: message.text,
         type: "text",
       };
+      messagesToAdd.push(textMessage);
 
-      // Update messages with user's message
-      setMessages((currentMessages) => [textMessage, ...currentMessages]);
+      setMessages((currentMessages) => [...messagesToAdd, ...currentMessages]);
 
-      // Get bot response
-      const response = await sendMessageToRag(message.text, currentChatId);
+      const response = await sendMessageToRag(
+        message.text,
+        currentChatId,
+        uploadedImageUrl
+      );
 
-      // Create bot response message
+      setSelectedImage(null);
+
       const responseMessage: MessageType.Text = {
         author: {
-          id: "06c33e8b-e835-4736-80f4-63f44b",
+          id: "assistant",
           firstName: "Hair bot",
           lastName: "Assistant",
-          imageUrl: require("@/assets/images/chatbot.png"),
+          imageUrl: require("../../assets/images/chatbot.png"),
         },
         createdAt: Date.now(),
         id: uuidv4(),
@@ -173,14 +312,12 @@ const Chatbot = () => {
         type: "text",
       };
 
-      // Update messages with bot's response
       setMessages((currentMessages) => [responseMessage, ...currentMessages]);
     } catch (error) {
       console.error("Error sending message:", error);
-      // Add error message to chat
       const errorMessage: MessageType.Text = {
         author: {
-          id: "06c33e8b-e835-4736-80f4-63f44b",
+          id: "assistant",
           firstName: "Hair bot",
           lastName: "Assistant",
           imageUrl: require("@/assets/images/chatbot.png"),
@@ -194,18 +331,120 @@ const Chatbot = () => {
     }
   };
 
+  const handleAttachmentPress = async () => {
+    try {
+      const imageData = await pickImageForChat();
+      if (imageData) {
+        setSelectedImage({
+          uri: imageData.uri,
+          name: imageData.name,
+          size: imageData.size,
+        });
+      }
+    } catch (error) {
+      console.error("Error handling attachment:", error);
+    }
+  };
+
+  const handleRemoveImage = () => {
+    setSelectedImage(null);
+  };
+
   const handleSelectChat = (chatId: string) => {
     setCurrentChatId(chatId);
     setIsSidebarOpen(false);
-    // Here you would typically load the messages for the selected chat
   };
 
-  const handleUpgradeToPremium = () => {
-    // TODO: Implement premium upgrade logic
-    console.log("Upgrade to premium clicked");
-    setShowSubscriptionModal(false);
-    // You can navigate to a subscription page or handle payment here
+  const handleUpgradeToPremium = async () => {
+    try {
+      console.log("🔍 Fetching offerings...");
+      const offerings = await Purchases.getOfferings();
+
+      // ✅ Debug complet
+      console.log("📦 Available offerings:", offerings);
+      console.log("📦 Current offering:", offerings.current);
+      console.log("📦 All offerings:", offerings.all);
+
+      if (!offerings.current) {
+        console.error("❌ No current offering found");
+        Alert.alert(
+          "Erreur",
+          "Aucune offre disponible. Vérifiez votre configuration RevenueCat."
+        );
+        return;
+      }
+
+      const availablePackages = offerings.current.availablePackages;
+      console.log("📦 Available packages:", availablePackages);
+      console.log(
+        "📦 Package identifiers:",
+        availablePackages.map((p) => p.identifier)
+      );
+
+      if (availablePackages.length === 0) {
+        console.error("❌ No packages found in current offering");
+        Alert.alert(
+          "Erreur",
+          "Aucun abonnement disponible. Contactez le support."
+        );
+        return;
+      }
+
+      // ✅ Utilise le premier package ou cherche par identifier
+      // Option 1: Prendre le premier package disponible
+      console.log(
+        "📦 Purchasing first available package...",
+        availablePackages
+      );
+      const packageToPurchase = availablePackages[0];
+
+      // Option 2: Ou chercher par identifier spécifique (ex: "$rc_monthly")
+      // const packageToPurchase = availablePackages.find(
+      //   (p) => p.identifier === "$rc_monthly" || p.identifier === "monthly"
+      // );
+
+      if (!packageToPurchase) {
+        console.error("❌ No suitable package found");
+        Alert.alert("Erreur", "Aucun abonnement mensuel trouvé.");
+        return;
+      }
+
+      console.log("💳 Attempting purchase of:", packageToPurchase.identifier);
+      const { customerInfo } = await Purchases.purchasePackage(
+        packageToPurchase
+      );
+
+      console.log("✅ Purchase successful");
+      console.log("👤 Customer info:", customerInfo);
+      console.log("🎁 Active entitlements:", customerInfo.entitlements.active);
+
+      if (typeof customerInfo.entitlements.active["premium"] !== "undefined") {
+        setIsPremium(true);
+        setShowSubscriptionModal(false);
+        Alert.alert("Succès", "Vous êtes maintenant premium ! 🎉");
+      } else {
+        console.warn(
+          "⚠️ Purchase completed but 'premium' entitlement not found"
+        );
+        Alert.alert(
+          "Attention",
+          "Achat effectué mais l'accès premium n'est pas encore actif. Veuillez patienter quelques instants."
+        );
+      }
+    } catch (e: any) {
+      console.error("❌ Purchase error:", e);
+      if (!e.userCancelled) {
+        Alert.alert(
+          "Erreur",
+          e.message || "Une erreur est survenue lors de l'achat."
+        );
+      } else {
+        console.log("ℹ️ User cancelled purchase");
+      }
+    }
   };
+
+  const { width, height } = useWindowDimensions();
 
   return (
     <View className="bg-candlelight-50 h-full w-full">
@@ -216,15 +455,15 @@ const Chatbot = () => {
         <Chat
           sendButtonVisibilityMode="always"
           emptyState={() => (
-            <Text className="font-medium text-3xl text-envy-500">
+            <Text className="font-medium text-3xl text-envy-500 font-borna">
               Bonjour {userData?.user?.username}, je suis ton coach capillaire
             </Text>
           )}
           messages={messages}
           onSendPress={handleSendPress}
-          showUserAvatars={true}
+          onAttachmentPress={handleAttachmentPress}
           user={user}
-          renderBubble={(props) => renderBubble(props)}
+          renderBubble={(props) => renderBubbleAdvanced(props)}
           theme={{
             ...defaultTheme,
             colors: {
@@ -233,22 +472,97 @@ const Chatbot = () => {
               background: "#FEFDE8",
               inputBackground: "#FEFDE8",
             },
+            icons: {
+              sendButtonIcon: () => (
+                <View className="bg-candlelight-500 rounded-full p-2">
+                  <Image
+                    source={require("@/assets/icons/send.svg")}
+                    style={{ width: 20, height: 20 }}
+                  />
+                </View>
+              ),
+              attachmentButtonIcon: () => (
+                <Image
+                  source={require("@/assets/icons/paperclip.svg")}
+                  style={{ width: 20, height: 20 }}
+                  className="mr-6"
+                />
+              ),
+            },
           }}
           textInputProps={{
-            placeholder: "Envoyer un message",
-            placeholderTextColor: "#999",
+            placeholder: " Envoyer un message",
+            placeholderTextColor: "#99AFBB",
             style: {
-              fontFamily: "Urbanist",
-              fontSize: 16,
-              color: "black",
+              fontFamily: "WorkSans",
+              fontSize: 14,
+              color: "#121C12",
+              borderRadius: 12,
+              borderWidth: 1,
+              borderColor: "#E5E7EB",
+              paddingHorizontal: 16,
+              paddingTop: 7,
+              paddingBottom: 7,
+              marginHorizontal: 8,
+              marginVertical: 8,
+              backgroundColor: "#f3f4f6",
             },
           }}
         />
+
+        {selectedImage && (
+          <View
+            style={{
+              position: "absolute",
+              top: 0,
+              left: 8,
+              backgroundColor: "#FEFDE8",
+              borderRadius: 12,
+              padding: 8,
+              shadowColor: "#000",
+              shadowOffset: { width: 0, height: 2 },
+              shadowOpacity: 0.1,
+              shadowRadius: 4,
+              elevation: 3,
+            }}
+            className="bg-candlelight-50"
+          >
+            <View style={{ position: "relative" }}>
+              <Image
+                source={{ uri: selectedImage.uri }}
+                style={{
+                  width: width - 32,
+                  height: width / 1.5,
+                  borderRadius: 8,
+                }}
+              />
+              <TouchableOpacity
+                onPress={handleRemoveImage}
+                style={{
+                  position: "absolute",
+                  top: -8,
+                  right: -8,
+                  backgroundColor: "#EF4444",
+                  borderRadius: 12,
+                  width: 24,
+                  height: 24,
+                  justifyContent: "center",
+                  alignItems: "center",
+                }}
+              >
+                <Text
+                  style={{ color: "white", fontSize: 16, fontWeight: "bold" }}
+                >
+                  ×
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        )}
       </View>
 
-      {/* Premium Subscription Modal */}
       <PremiumSubscriptionModal
-        visible={true}
+        visible={showSubscriptionModal}
         onClose={() => setShowSubscriptionModal(false)}
         onUpgrade={handleUpgradeToPremium}
       />
@@ -257,19 +571,16 @@ const Chatbot = () => {
 };
 
 export default Chatbot;
-/**
- * 
- * @param message 
- * @returns 
- *  message?: string;
-  session_id?: string;
-  image_url?: string;
- */
 
-const sendMessageToRag = async (message: string, session_id?: string) => {
+const sendMessageToRag = async (
+  message: string,
+  session_id?: string,
+  imageUrl?: string
+) => {
   try {
     const payload: StartConversationPayload = {
       message,
+      image_url: imageUrl,
     };
     if (session_id) {
       payload.session_id = session_id;

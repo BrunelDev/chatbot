@@ -2,8 +2,20 @@
 @tailwind components;
 @tailwind utilities;
 
-
 :root {
+  * {
+    font-family: "WorkSans";
+  }
+
+  /* Classes utilitaires pour les polices */
+.font-worksans {
+  font-family: "WorkSans ";
+}
+
+.font-borna {
+  font-family: "Borna";
+}
+
   /* Primary (green) - #587950 */
   --color-primary-0: 88 121 80;
   --color-primary-50: 88 121 80;
@@ -73,3 +85,8 @@
   --color-indicator-info: 59 130 246; /* blue-500 */
   --color-indicator-error: 239 68 68; /* red-500 */
 }
+
+
+
+
+

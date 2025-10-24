@@ -33,6 +33,7 @@ export default function TabLayout() {
 
   return (
     <SafeAreaProvider>
+      
       <Tabs
         screenOptions={({ route }) => ({
           tabBarActiveTintColor: "#4D5962",
@@ -115,12 +116,12 @@ const styles = StyleSheet.create({
   iconContainer: {
     alignItems: "center",
     justifyContent: "center",
-    width: 32,
-    height: 32,
+    width: 38,
+    height: 38,
     borderRadius: 16,
   },
   activeIconContainer: {
-    backgroundColor: "#F5F3E7", // A light version of your candlelight color
+    backgroundColor: "#FFF987", // A light version of your candlelight color
   },
   icon: {
     width: 24,

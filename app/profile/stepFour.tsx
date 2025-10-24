@@ -1,6 +1,9 @@
 import { PrimaryButton } from "@/components/buttons/primaryButton";
 import { GoBack } from "@/components/headers/goBack";
 import { SubTitle, Title } from "@/components/textComponents/title";
+import { HAIR_CONCERNS_CHOICES, useFormStore } from "@/context/useFormStore";
+import profileService from "@/services/profile";
+import { Image } from "expo-image";
 import { router } from "expo-router";
 import { Check } from "lucide-react-native";
 import React, { useMemo, useState } from "react";
@@ -49,10 +52,7 @@ const ROUTINE_FREQ: Option[] = [
 
 export default function FormOne() {
   const [hairType, setHairType] = useState<string | null>(null);
-  const [scalpConditions, setScalpConditions] = useState<string[]>([]);
-  const [hairGoals, setHairGoals] = useState<string[]>([]);
   const [routineFrequency, setRoutineFrequency] = useState<string | null>(null);
-  const [notes, setNotes] = useState<string>("");
 
   const toggleMulti = (
     list: string[],
@@ -88,14 +88,22 @@ export default function FormOne() {
       </Text>
     </View>
   );
-  const goals = [
-    { title: "Favoriser la pousse", value: "Pousse" },
-    { title: "Réduire la classe", value: "Force" },
-    { title: "Définir mes boucles", value: "Brillance" },
-    { title: "Hydrater mes cheveux", value: "Volume" },
-    { title: "Gérer les frisottis", value: "Hydratation" },
-    { title: "Stimuler le cuir chevelu", value: "Stimulation" },
+  const problemsData: { title: string; value: HAIR_CONCERNS_CHOICES }[] = [
+    { title: "Cheveux secs", value: HAIR_CONCERNS_CHOICES.CheveuxSec },
+    { title: "Cheveux gras", value: HAIR_CONCERNS_CHOICES.CheveuxGras },
+    { title: "Pellicules", value: HAIR_CONCERNS_CHOICES.Pellicules },
+    { title: "Démangeaisons", value: HAIR_CONCERNS_CHOICES.Demangeaisons },
+    { title: "Chute de cheveux", value: HAIR_CONCERNS_CHOICES.ChuteCheveux },
+    { title: "Manque de volume", value: HAIR_CONCERNS_CHOICES.ManqueDeVolume },
   ];
+  const handleSelectProblem = (value: HAIR_CONCERNS_CHOICES) => {
+    if (!value || !hairProblems) return;
+    const newProblems = hairProblems.includes(value)
+      ? hairProblems.filter((item) => item !== value)
+      : [...hairProblems, value];
+    setFormData({ hairProblems: newProblems });
+  };
+  const { hairProblems, setFormData } = useFormStore();
 
   return (
     <KeyboardAvoidingView
@@ -110,8 +118,14 @@ export default function FormOne() {
           <SubTitle title="Cette question nous permettra d’ identifier les défis capillaires pour ajuster les recommandations" />
         </View>
         <View className="flex flex-row flex-wrap gap-y-4 gap-x-2">
-          {goals.map((goal) => (
-            <Objective title={goal.title} value={goal.value} key={goal.value} />
+          {problemsData.map((problem) => (
+            <Objective
+              key={problem.value}
+              title={problem.title}
+              value={problem.value}
+              active={hairProblems?.includes(problem.value) || false}
+              onPress={handleSelectProblem}
+            />
           ))}
         </View>
 
@@ -119,7 +133,16 @@ export default function FormOne() {
         <View className="absolute bottom-14 left-4 right-4">
           <PrimaryButton
             title="Enregistrer"
-            handlePress={() => router.back()}
+            handlePress={async () => {
+              if (hairProblems) {
+                await profileService.updateHairProfile({
+                  concerns: hairProblems,
+                });
+              }
+              router.back();
+            }}
+            showLoading={true}
+            loadingValue="Modification..."
           />
         </View>
       </View>
@@ -127,24 +150,46 @@ export default function FormOne() {
   );
 }
 
-const Objective = ({ title, value }: { title: string; value: string }) => {
-  const [active, setActive] = useState(false);
+const Objective = ({
+  title,
+  value,
+  active,
+  onPress,
+}: {
+  title: string;
+  value: HAIR_CONCERNS_CHOICES;
+  active: boolean | undefined;
+  onPress: (value: HAIR_CONCERNS_CHOICES) => void;
+}) => {
   return (
     <TouchableOpacity
       activeOpacity={0.7}
-      onPress={() => setActive(!active)}
-      className={`px-4 py-2 rounded-xl border border-envy-300 min-w-[170px] h-[44px] flex flex-row items-center gap-3 ${
-        active ? "bg-envy-500" : ""
+      onPress={() => onPress(value)}
+      className={`px-4 py-2 w-fit h-[44px] flex flex-row items-center gap-3 ${
+        active ? "bg-envy-500" : "border border-envy-300"
       }`}
+      style={{ borderRadius: 12 }}
     >
-      <View
-        className={`w-4 h-4 rounded-full border border-envy-300 ${
-          active ? "bg-candlelight-500 border-candlelight-500" : ""
+      {active ? (
+        <Image
+          source={require("@/assets/icons/yellow-check.svg")}
+          style={{ width: 16, height: 16 }}
+        />
+      ) : (
+        <View
+          className={`rounded-full border border-envy-300`}
+          style={{ width: 16, height: 16 }}
+        >
+          {active && <Check size={12} color="#587950" />}
+        </View>
+      )}
+
+      <Text
+        style={{ flexBasis: "auto" }}
+        className={`font-medium text-sm ${
+          active ? "text-white" : "text-envy-950"
         }`}
       >
-        {active && <Check size={12} color="#587950" />}
-      </View>
-      <Text style={{ flexBasis: "auto" }} className="font-medium text-envy-950">
         {title}
       </Text>
     </TouchableOpacity>

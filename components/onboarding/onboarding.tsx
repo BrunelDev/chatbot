@@ -34,11 +34,11 @@ export function Onboarding({
         >
           <Text
             className="text-[#FFFDC2]  text-[30px]"
-            style={{ fontFamily: "Gt_Walsheim", fontWeight: 500 }}
+            style={{ fontFamily: "Borna", fontWeight: 500 }}
           >
             {onboardingProps.title}
           </Text>
-          <Text className="text-[#F4F8F9] font-work ">
+          <Text className="text-[#F4F8F9] font-worksans">
             {onboardingProps.description}
           </Text>
         </View>

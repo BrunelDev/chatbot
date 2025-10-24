@@ -7,11 +7,13 @@ import {
   useFormStore,
 } from "@/context/useFormStore";
 import profileService from "@/services/profile";
-import WheelPicker from "@quidone/react-native-wheel-picker";
+import { pickerStyle } from "@/styles/pickerStyle";
+import { Picker } from "@react-native-picker/picker";
 import { Image } from "expo-image";
 import { router } from "expo-router";
-import React from "react";
+import React, { useState } from "react";
 import {
+  ActivityIndicator,
   Alert,
   KeyboardAvoidingView,
   Platform,
@@ -49,7 +51,11 @@ export default function FormFive() {
     resetForm,
   } = useFormStore();
 
+  const [isLoading, setIsLoading] = useState(false);
+
   const handleSubmit = async () => {
+    if (isLoading) return; // Empêcher les soumissions multiples
+
     /**
      *   goals?: string[];
   hair_type?: string;
@@ -80,6 +86,7 @@ export default function FormFive() {
     }
 
     try {
+      setIsLoading(true);
       console.log("hairType", hairType);
       console.log("hairHeight", hairHeight);
       console.log("goals", goals);
@@ -98,8 +105,8 @@ export default function FormFive() {
       await profileService.updateHairProfile({
         hair_type: hairType,
         hair_height: hairHeight,
-        goals: goals,
-        concerns: hairProblems,
+        goals: goals || [],
+        concerns: hairProblems || [],
         routine_status: routineFrequency,
       });
       Alert.alert("Succès", "Votre profil capillaire a été créé avec succès.");
@@ -112,6 +119,8 @@ export default function FormFive() {
         "Erreur",
         "Une erreur est survenue lors de la création de votre profil."
       );
+    } finally {
+      setIsLoading(false);
     }
   };
   //const [value, setValue] = useState(0);
@@ -128,26 +137,26 @@ export default function FormFive() {
           <Title title="Avez-vous une routine capillaire ?" />
           <SubTitle title="Cette information nous aide à comprendre votre niveau d’expérience et vos habitudes." />
         </View>
-        <WheelPicker
-          data={routineFrequencyData}
-          value={
+        <Picker
+          selectedValue={
             routineFrequency == ""
               ? ROUTINE_STATUS_CHOICES.Debutante
               : routineFrequency
           }
-          onValueChanged={({ item: { value } }) => {
+          onValueChange={(value) => {
             console.log("value", value);
             setFormData({ routineFrequency: value });
           }}
-          enableScrollByTapOnItem={true}
-          itemTextStyle={{
-            color: "#121C12",
-            fontSize: 14,
-            fontWeight: "400",
-            lineHeight: 24,
-            paddingVertical: "auto",
-          }}
-        />
+          itemStyle={pickerStyle.pickerItem}
+        >
+          {routineFrequencyData.map((item) => (
+            <Picker.Item
+              key={item.value}
+              label={item.label}
+              value={item.value}
+            />
+          ))}
+        </Picker>
 
         {/* Sticky footer button */}
         <View className="absolute w-full bottom-10 left-4 flex flex-row items-center justify-between ">
@@ -156,6 +165,8 @@ export default function FormFive() {
             onPress={async () => {
               await handleSubmit();
             }}
+            disabled={isLoading}
+            style={{ opacity: isLoading ? 0.5 : 1 }}
           >
             <Text className="text-[#4D5962] font-medium">Passer</Text>
           </TouchableOpacity>
@@ -163,13 +174,22 @@ export default function FormFive() {
             onPress={async () => {
               await handleSubmit();
             }}
+            disabled={isLoading}
             className="flex flex-row  justify-center items-center bg-candlelight-500 rounded-full"
-            style={{ width: 44, height: 44 }}
+            style={{
+              width: 44,
+              height: 44,
+              opacity: isLoading ? 0.5 : 1,
+            }}
           >
-            <Image
-              source={require("../../assets/icons/arrow-right.svg")}
-              style={{ width: 20, height: 20 }}
-            />
+            {isLoading ? (
+              <ActivityIndicator size="small" color="#FFFFFF" />
+            ) : (
+              <Image
+                source={require("../../assets/icons/arrow-right.svg")}
+                style={{ width: 20, height: 20 }}
+              />
+            )}
           </TouchableOpacity>
         </View>
       </View>

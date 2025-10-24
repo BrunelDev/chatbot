@@ -1,6 +1,6 @@
-import { create } from "zustand";
-import { persist, createJSONStorage } from "zustand/middleware";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { create } from "zustand";
+import { createJSONStorage, persist } from "zustand/middleware";
 
 /**
  * HAIR_TYPE_CHOICES = [
@@ -64,6 +64,15 @@ export enum ROUTINE_STATUS_CHOICES {
   Definie = "definie",
   Irreguliere = "irreguliere",
   Debutante = "debutante",
+}
+
+export enum HAIR_GOALS {
+  Pousse = "pousse",
+  Force = "force",
+  Brillance = "brillance",
+  Volume = "volume",
+  Hydratation = "hydratation",
+  Stimulation = "stimulation",
 }
 
 export interface FormState {
