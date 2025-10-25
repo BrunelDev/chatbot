@@ -33,7 +33,6 @@ export default function TabLayout() {
 
   return (
     <SafeAreaProvider>
-      
       <Tabs
         screenOptions={({ route }) => ({
           tabBarActiveTintColor: "#4D5962",

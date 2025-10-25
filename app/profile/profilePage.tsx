@@ -82,7 +82,7 @@ export default function Profile() {
         Alert.alert(
           "Succès",
           "Votre photo de profil a été mise à jour avec succès !",
-          [{ text: "OK" }]
+          [{ text: "OK" }],
         );
       }
     } catch (error) {
@@ -90,7 +90,7 @@ export default function Profile() {
       Alert.alert(
         "Erreur",
         "Une erreur est survenue lors de la mise à jour de votre photo de profil.",
-        [{ text: "OK" }]
+        [{ text: "OK" }],
       );
     }
   };
@@ -110,7 +110,7 @@ export default function Profile() {
             signOut(); // Utilise le contexte d'authentification
           },
         },
-      ]
+      ],
     );
   };
 
@@ -133,7 +133,7 @@ export default function Profile() {
     } catch (error: any) {
       Alert.alert(
         "Erreur",
-        error.message || "Impossible de supprimer le compte."
+        error.message || "Impossible de supprimer le compte.",
       );
     }
   };
@@ -152,7 +152,7 @@ export default function Profile() {
         opacity={0.5}
       />
     ),
-    []
+    [],
   );
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
@@ -221,6 +221,41 @@ export default function Profile() {
               source={require("../../assets/icons/chevronRight.svg")}
               style={{ width: 20, height: 20 }}
             />
+          </TouchableOpacity>
+
+          {/* Bouton Premium */}
+          <TouchableOpacity
+            className="bg-gradient-to-r from-envy-200 to-envy-300 h-[70px] flex flex-row items-center justify-between px-4 rounded-xl border border-envy-400"
+            onPress={() => {
+              // TODO: Implémenter la navigation vers la page premium
+              // Alert.alert("Premium", "Fonctionnalité premium à venir !");
+            }}
+            activeOpacity={0.7}
+            style={{
+              backgroundColor: "#C9D6C4",
+              borderWidth: 1,
+              borderColor: "#587950",
+            }}
+          >
+            <View className="flex flex-row items-center gap-x-3">
+              <View className="w-8 h-8 bg-gradient-to-r from-envy-400 to-envy-500 rounded-full flex items-center justify-center">
+                <Text className="text-envy-800 font-bold text-sm">★</Text>
+              </View>
+              <View className="flex flex-col">
+                <Text className="text-envy-800 text-sm font-semibold">
+                  Passer à Premium
+                </Text>
+                <Text className="text-envy-700 text-xs">
+                  Dites non au publicités
+                </Text>
+              </View>
+            </View>
+            <View className="flex flex-row items-center gap-x-2">
+              <Image
+                source={require("../../assets/icons/chevronRight.svg")}
+                style={{ width: 20, height: 20, tintColor: "#587950" }}
+              />
+            </View>
           </TouchableOpacity>
 
           <View className="flex flex-col gap-y-6">
@@ -306,7 +341,7 @@ const Option = ({
           console.log(href);
           await WebBrowser.openBrowserAsync(href);
         } else {
-          router.push(href);
+          router.push(href as any);
         }
       }}
       className="flex flex-row items-center justify-between pb-4 border-b border-envy-200 px-2"

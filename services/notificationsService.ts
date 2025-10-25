@@ -38,11 +38,26 @@ export interface BulkActionResponse {
 }
 
 const notificationsService = {
-  getNotifications: async (): Promise<NotificationsResponse> => {
+  getNotifications: async (
+    page?: number,
+    pageSize?: number
+  ): Promise<NotificationsResponse> => {
     try {
-      const { data } = await apiClient.get<NotificationsResponse>(
-        "/notifications/"
-      );
+      const params = new URLSearchParams();
+      if (page !== undefined) {
+        params.append("page", page.toString());
+      }
+      if (pageSize !== undefined) {
+        params.append("page_size", pageSize.toString());
+      }
+
+      const queryString = params.toString();
+      const url = queryString
+        ? `/notifications/?${queryString}`
+        : "/notifications/";
+
+      const { data } = await apiClient.get<NotificationsResponse>(url);
+      console.log("liste :", data)
       return data;
     } catch (error) {
       throw handleApiError(error, "Failed to load notifications.");
@@ -54,6 +69,7 @@ const notificationsService = {
       const { data } = await apiClient.get<NotificationStats>(
         "/notifications/stats/"
       );
+      console.log("liste2" , data);
       return data;
     } catch (error) {
       throw handleApiError(error, "Failed to load notification stats.");
@@ -103,7 +119,8 @@ const notificationsService = {
       }
 
       // Récupérer toutes les notifications pour obtenir leurs IDs
-      const notifications = await notificationsService.getNotifications();
+      // Utiliser une taille de page plus grande pour récupérer toutes les notifications
+      const notifications = await notificationsService.getNotifications(1, 100);
       const unreadIds = notifications.results
         .filter((notification) => !notification.is_read)
         .map((notification) => notification.id);

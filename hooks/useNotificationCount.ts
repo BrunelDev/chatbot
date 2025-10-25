@@ -8,7 +8,9 @@ export interface UseNotificationCountReturn {
   refreshCount: () => Promise<void>;
 }
 
-export const useNotificationCount = (): UseNotificationCountReturn => {
+export const useNotificationCount = (
+  pollingInterval: number = 10000 // 30 secondes par défaut
+): UseNotificationCountReturn => {
   const [unreadCount, setUnreadCount] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -32,8 +34,16 @@ export const useNotificationCount = (): UseNotificationCountReturn => {
   }, []);
 
   useEffect(() => {
+    // Fetch initial
     refreshCount();
-  }, [refreshCount]);
+
+    // Polling automatique
+    const interval = setInterval(() => {
+      refreshCount();
+    }, pollingInterval);
+
+    return () => clearInterval(interval);
+  }, [refreshCount, pollingInterval]);
 
   return {
     unreadCount,

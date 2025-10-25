@@ -114,10 +114,12 @@ export default function Explore() {
         <Text className="font-medium text-xl text-envy-700 font-borna">
           Recommandés pour vous
         </Text>
-        <CategoryChooser
-          selectedCategory={selectedCategory}
-          setSelectedCategory={() => setShowCategoryModal(true)}
-        />
+        {!showTips && (
+          <CategoryChooser
+            selectedCategory={selectedCategory}
+            setSelectedCategory={() => setShowCategoryModal(true)}
+          />
+        )}
 
         <CategoryModal
           showModal={showCategoryModal}

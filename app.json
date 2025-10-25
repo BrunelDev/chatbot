@@ -9,7 +9,7 @@
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
-      "buildNumber": "1.0.10",
+      "buildNumber": "1.0.12",
       "supportsTablet": true,
       "bundleIdentifier": "com.boucleenpoesie.app",
       "infoPlist": {

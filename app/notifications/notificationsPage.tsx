@@ -17,13 +17,20 @@ export default function NotificationsPage() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [hasNextPage, setHasNextPage] = useState(false);
+  const [totalCount, setTotalCount] = useState(0);
 
   useEffect(() => {
     const fetchNotifications = async () => {
       try {
         setIsLoading(true);
-        const response = await notificationsService.getNotifications();
+        const response = await notificationsService.getNotifications(1, 20);
         setNotifications(response.results);
+        setCurrentPage(1);
+        setHasNextPage(!!response.next);
+        setTotalCount(response.count);
       } catch (error) {
         console.error(error);
       } finally {
@@ -36,14 +43,42 @@ export default function NotificationsPage() {
   const onRefresh = async () => {
     try {
       setIsRefreshing(true);
-      const response = await notificationsService.getNotifications();
+      const response = await notificationsService.getNotifications(1, 20);
       setNotifications(response.results);
+      setCurrentPage(1);
+      setHasNextPage(!!response.next);
+      setTotalCount(response.count);
     } catch (error) {
       console.error(error);
     } finally {
       setIsRefreshing(false);
     }
   };
+
+  // Fonction pour charger plus de notifications
+  const loadMoreNotifications = useCallback(async () => {
+    if (!hasNextPage || isLoadingMore) return;
+
+    try {
+      setIsLoadingMore(true);
+      const nextPage = currentPage + 1;
+      const response = await notificationsService.getNotifications(
+        nextPage,
+        20
+      );
+
+      setNotifications((prev) => [...prev, ...response.results]);
+      setCurrentPage(nextPage);
+      setHasNextPage(!!response.next);
+    } catch (error) {
+      console.error(
+        "Erreur lors du chargement de plus de notifications:",
+        error
+      );
+    } finally {
+      setIsLoadingMore(false);
+    }
+  }, [currentPage, hasNextPage, isLoadingMore]);
 
   // Fonction pour marquer une notification comme lue
   const markAsRead = useCallback(async (notificationId: number) => {
@@ -64,7 +99,9 @@ export default function NotificationsPage() {
   return (
     <View className="bg-candlelight-50 h-full w-full px-4">
       <SafeAreaView />
-      <GoBack title="Notifications" />
+      <GoBack
+        title={`Notifications${totalCount > 0 ? ` (${totalCount})` : ""}`}
+      />
       {isLoading ? (
         <View className="flex-1 justify-center items-center">
           <ActivityIndicator size="large" color="#587950" />
@@ -78,8 +115,20 @@ export default function NotificationsPage() {
           renderItem={({ item }) => (
             <NotificationItem notification={item} onMarkAsRead={markAsRead} />
           )}
-          ItemSeparatorComponent={() => <View className="h-6"/>}
+          ItemSeparatorComponent={() => <View className="h-6" />}
           ListEmptyComponent={() => <EmptyState />}
+          ListFooterComponent={() =>
+            isLoadingMore ? (
+              <View className="py-4 items-center">
+                <ActivityIndicator size="small" color="#587950" />
+                <Text className="text-[#4D5962] mt-2 text-sm font-worksans">
+                  Chargement...
+                </Text>
+              </View>
+            ) : null
+          }
+          onEndReached={loadMoreNotifications}
+          onEndReachedThreshold={0.1}
           refreshControl={
             <RefreshControl
               refreshing={isRefreshing}
@@ -146,7 +195,9 @@ const NotificationItem = ({
       onPress={handlePress}
       activeOpacity={0.7}
       className={`${
-        notification.is_read ? "bg-candlelight-100 p-3 rounded-xl" : "bg-candlelight-200 p-3 rounded-xl"
+        notification.is_read
+          ? "bg-candlelight-100 p-3 rounded-xl"
+          : "bg-candlelight-200 p-3 rounded-xl"
       } flex flex-col gap-3`}
     >
       <View className="flex flex-row items-center justify-between">

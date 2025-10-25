@@ -14,14 +14,22 @@ import { Chat, defaultTheme, MessageType } from "@flyerhq/react-native-chat-ui";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Image } from "expo-image";
 import { useFocusEffect } from "expo-router";
-import React, { ReactNode, useCallback, useEffect, useState } from "react";
+import React, {
+  ReactNode,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import {
   Alert,
+  Animated,
   Text,
   TouchableOpacity,
   useWindowDimensions,
   View,
 } from "react-native";
+import Markdown from "react-native-markdown-display";
 import Purchases from "react-native-purchases";
 
 // Extension des types de messages pour inclure les messages avec image et texte
@@ -44,9 +52,90 @@ const uuidv4 = () => {
   });
 };
 
+// ID constant pour le message de typing
+const TYPING_MESSAGE_ID = "typing-indicator-message";
+
 const Chatbot = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [currentChatId, setCurrentChatId] = useState<string | undefined>();
+  const [isTyping, setIsTyping] = useState(false);
+
+  // ✅ Component d'animation interne pour les points
+  const TypingDots = () => {
+    const dot1 = useRef(new Animated.Value(0.3)).current;
+    const dot2 = useRef(new Animated.Value(0.3)).current;
+    const dot3 = useRef(new Animated.Value(0.3)).current;
+
+    useEffect(() => {
+      const createAnimation = (dot: Animated.Value, delay: number) => {
+        return Animated.loop(
+          Animated.sequence([
+            Animated.delay(delay),
+            Animated.timing(dot, {
+              toValue: 1,
+              duration: 300,
+              useNativeDriver: true,
+            }),
+            Animated.timing(dot, {
+              toValue: 0.3,
+              duration: 300,
+              useNativeDriver: true,
+            }),
+            Animated.delay(200),
+          ])
+        );
+      };
+
+      const animation1 = createAnimation(dot1, 0);
+      const animation2 = createAnimation(dot2, 150);
+      const animation3 = createAnimation(dot3, 300);
+
+      animation1.start();
+      animation2.start();
+      animation3.start();
+
+      return () => {
+        animation1.stop();
+        animation2.stop();
+        animation3.stop();
+      };
+    }, []);
+
+    return (
+      <View className="flex-row items-center space-x-1">
+        <Animated.View
+          style={{
+            width: 6,
+            height: 6,
+            borderRadius: 3,
+            backgroundColor: "#587950",
+            opacity: dot1,
+            marginRight: 2,
+          }}
+        />
+        <Animated.View
+          style={{
+            width: 6,
+            height: 6,
+            borderRadius: 3,
+            backgroundColor: "#587950",
+            opacity: dot2,
+            marginRight: 2,
+          }}
+        />
+        <Animated.View
+          style={{
+            width: 6,
+            height: 6,
+            borderRadius: 3,
+            backgroundColor: "#587950",
+            opacity: dot3,
+          }}
+        />
+      </View>
+    );
+  };
+
   // Fonction pour convertir ExtendedMessageType en MessageType.Any pour le composant Chat
   const convertToChatMessages = (
     messages: ExtendedMessageType[]
@@ -65,6 +154,7 @@ const Chatbot = () => {
       return message as MessageType.Any;
     });
   };
+
   const [messages, setMessages] = useState<ExtendedMessageType[]>([]);
   const [showSubscriptionModal, setShowSubscriptionModal] = useState(true);
   const [isPremium, setIsPremium] = useState(false);
@@ -79,6 +169,13 @@ const Chatbot = () => {
   const user = {
     id: "06c33e8b-e835-4736-80f4-63f44b66666c",
     imageUrl: require("@/assets/images/userProfile-img.png"),
+  };
+
+  const assistantUser = {
+    id: "assistant",
+    firstName: "Hair bot",
+    lastName: "Assistant",
+    imageUrl: require("@/assets/images/chatbot.png"),
   };
 
   // ✅ Vérifier le statut premium au chargement
@@ -112,26 +209,31 @@ const Chatbot = () => {
     const isTextMessage = message.type === "text";
     const isImageWithTextMessage = message.type === "image_with_text";
 
+    // ✅ Afficher l'indicateur de typing avec animation pour le message spécial
+    if (message.id === TYPING_MESSAGE_ID) {
+      return <TypingDots />;
+    }
+
     return (
-      <View
-        style={{
-          backgroundColor: isUserMessage ? "#FFFDC2" : "transparent",
-          borderColor: "transparent",
-          borderWidth: 0,
-          overflow: "hidden",
-          maxWidth: isImageMessage || isImageWithTextMessage ? 250 : undefined,
-        }}
-        className={`${
-          isUserMessage ? "rounded-2xl" : "rounded-none"
-        } text-international_orange-200`}
-      >
+      <>
         {isImageWithTextMessage ? (
-          <View className="flex gap-2">
-            <View className="px-2 py-3">
-              {/* Texte au-dessus de l'image */}
-              <Text className="text-[#4D5962] text-[14px] font-worksans mb-2">
-                {message.text || ""}
-              </Text>
+          <>
+            <View
+              style={{
+                backgroundColor: isUserMessage ? "#FFFDC2" : "transparent",
+                borderColor: "transparent",
+                borderWidth: 0,
+                overflow: "hidden",
+                maxWidth:
+                  isImageMessage || isImageWithTextMessage ? 250 : undefined,
+              }}
+              className={`${
+                isUserMessage ? "rounded-2xl" : "rounded-none"
+              } text-international_orange-200 w-fit`}
+            >
+              <View className="px-2 py-3">
+                <Markdown>{message.text || ""}</Markdown>
+              </View>
             </View>
             {/* Image */}
             <View
@@ -165,42 +267,82 @@ const Chatbot = () => {
                 )}
               </View>
             </View>
-          </View>
+          </>
         ) : isImageMessage ? (
           <View
+            style={{
+              backgroundColor: isUserMessage ? "#FFFDC2" : "transparent",
+              borderColor: "transparent",
+              borderWidth: 0,
+              overflow: "hidden",
+              maxWidth:
+                isImageMessage || isImageWithTextMessage ? 250 : undefined,
+            }}
             className={`${
-              isUserMessage ? "rounded-xl" : "rounded-lg"
-            } overflow-hidden`}
+              isUserMessage ? "rounded-2xl" : "rounded-none"
+            } text-international_orange-200`}
           >
-            <View style={{ position: "relative" }}>
-              {child}
-              {isUserMessage && (
-                <View
-                  style={{
-                    position: "absolute",
-                    bottom: 4,
-                    right: 4,
-                    backgroundColor: "rgba(0,0,0,0.6)",
-                    borderRadius: 8,
-                    paddingHorizontal: 6,
-                    paddingVertical: 2,
-                  }}
-                >
-                  <Text style={{ color: "white", fontSize: 10 }}>📷</Text>
-                </View>
-              )}
+            <View
+              className={`${
+                isUserMessage ? "rounded-xl" : "rounded-lg"
+              } overflow-hidden`}
+            >
+              <View style={{ position: "relative" }}>
+                {child}
+                {isUserMessage && (
+                  <View
+                    style={{
+                      position: "absolute",
+                      bottom: 4,
+                      right: 4,
+                      backgroundColor: "rgba(0,0,0,0.6)",
+                      borderRadius: 8,
+                      paddingHorizontal: 6,
+                      paddingVertical: 2,
+                    }}
+                  >
+                    <Text style={{ color: "white", fontSize: 10 }}>📷</Text>
+                  </View>
+                )}
+              </View>
             </View>
           </View>
         ) : isTextMessage ? (
-          <View className="px-2 py-3">
-            <Text className="text-[#4D5962] text-[14px] font-worksans">
-              {message.text || ""}
-            </Text>
+          <View
+            style={{
+              backgroundColor: isUserMessage ? "#FFFDC2" : "transparent",
+              borderColor: "transparent",
+              borderWidth: 0,
+              overflow: "hidden",
+              maxWidth:
+                isImageMessage || isImageWithTextMessage ? 250 : undefined,
+            }}
+            className={`${
+              isUserMessage ? "rounded-2xl" : "rounded-none"
+            } text-international_orange-200`}
+          >
+            <View className="px-2 py-3">
+              <Markdown>{message.text || ""}</Markdown>
+            </View>
           </View>
         ) : (
-          <View className="px-2 py-3">{child}</View>
+          <View
+            style={{
+              backgroundColor: isUserMessage ? "#FFFDC2" : "transparent",
+              borderColor: "transparent",
+              borderWidth: 0,
+              overflow: "hidden",
+              maxWidth:
+                isImageMessage || isImageWithTextMessage ? 250 : undefined,
+            }}
+            className={`${
+              isUserMessage ? "rounded-2xl" : "rounded-none"
+            } text-international_orange-200`}
+          >
+            <View className="px-2 py-3">{child}</View>
+          </View>
         )}
-      </View>
+      </>
     );
   };
 
@@ -226,8 +368,7 @@ const Chatbot = () => {
               conversation.messages.reverse().map((message) => ({
                 id: message.id.toString(),
                 type: message.image_file ? "image_with_text" : "text",
-                author:
-                  message.message_type === "user" ? user : { id: "assistant" },
+                author: message.message_type === "user" ? user : assistantUser,
                 text: message.content,
                 imageFile: message.image_file,
                 createdAt: Date.now(),
@@ -290,6 +431,19 @@ const Chatbot = () => {
       messagesToAdd.push(textMessage);
 
       setMessages((currentMessages) => [...messagesToAdd, ...currentMessages]);
+      console.log("image: ", uploadedImageUrl);
+
+      // ✅ Ajouter le message de typing dans la liste
+      const typingMessage: MessageType.Text = {
+        author: assistantUser,
+        createdAt: Date.now(),
+        id: TYPING_MESSAGE_ID,
+        text: "",
+        type: "text",
+      };
+
+      setMessages((currentMessages) => [typingMessage, ...currentMessages]);
+      setIsTyping(true);
 
       const response = await sendMessageToRag(
         message.text,
@@ -297,15 +451,16 @@ const Chatbot = () => {
         uploadedImageUrl
       );
 
+      // ✅ Retirer le message de typing
+      setMessages((currentMessages) =>
+        currentMessages.filter((msg) => msg.id !== TYPING_MESSAGE_ID)
+      );
+      setIsTyping(false);
+
       setSelectedImage(null);
 
       const responseMessage: MessageType.Text = {
-        author: {
-          id: "assistant",
-          firstName: "Hair bot",
-          lastName: "Assistant",
-          imageUrl: require("../../assets/images/chatbot.png"),
-        },
+        author: assistantUser,
         createdAt: Date.now(),
         id: uuidv4(),
         text: response?.ai_response.content!,
@@ -315,13 +470,15 @@ const Chatbot = () => {
       setMessages((currentMessages) => [responseMessage, ...currentMessages]);
     } catch (error) {
       console.error("Error sending message:", error);
+
+      // ✅ Retirer le message de typing en cas d'erreur
+      setMessages((currentMessages) =>
+        currentMessages.filter((msg) => msg.id !== TYPING_MESSAGE_ID)
+      );
+      setIsTyping(false);
+
       const errorMessage: MessageType.Text = {
-        author: {
-          id: "assistant",
-          firstName: "Hair bot",
-          lastName: "Assistant",
-          imageUrl: require("@/assets/images/chatbot.png"),
-        },
+        author: assistantUser,
         createdAt: Date.now(),
         id: uuidv4(),
         text: "Désolé, une erreur s'est produite. Veuillez réessayer.",
@@ -459,7 +616,7 @@ const Chatbot = () => {
               Bonjour {userData?.user?.username}, je suis ton coach capillaire
             </Text>
           )}
-          messages={messages}
+          messages={convertToChatMessages(messages)}
           onSendPress={handleSendPress}
           onAttachmentPress={handleAttachmentPress}
           user={user}
@@ -501,8 +658,8 @@ const Chatbot = () => {
               borderWidth: 1,
               borderColor: "#E5E7EB",
               paddingHorizontal: 16,
-              paddingTop: 7,
-              paddingBottom: 7,
+              paddingTop: 3,
+              paddingBottom: 10,
               marginHorizontal: 8,
               marginVertical: 8,
               backgroundColor: "#f3f4f6",
