@@ -13,6 +13,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   SafeAreaView,
+  ScrollView,
   Text,
   TouchableOpacity,
   useWindowDimensions,
@@ -49,8 +50,13 @@ export default function FormTwo() {
       image: require("../../assets/images/cheveux_boucles.png"),
     },
     {
-      title: "Cheveux frisés à crépus",
-      value: HAIR_TYPE_CHOICES.FriseCrepus,
+      title: "Cheveux frisés",
+      value: HAIR_TYPE_CHOICES.Frise,
+      image: require("../../assets/images/cheveux_frises.png"),
+    },
+    {
+      title: "Cheveux crépus",
+      value: HAIR_TYPE_CHOICES.Crepu,
       image: require("../../assets/images/cheveux_crepus.png"),
     },
   ];
@@ -75,18 +81,23 @@ export default function FormTwo() {
           <Title title="Quel est votre type de cheveux ?" />
           <SubTitle title="Cette question nous permettra d’ identifier la texture principale pour personnaliser les conseils." />
         </View>
-        <View className="flex flex-row flex-wrap gap-y-4 gap-x-4">
-          {hairTypes.map((hairType) => (
-            <HairType
-              title={hairType.title}
-              value={hairType.value}
-              image={hairType.image}
-              key={hairType.value}
-              selectedHairType={selectedHairType}
-              setSelectedHairType={setSelectedHairType}
-            />
-          ))}
-        </View>
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={{ paddingBottom: 150 }}
+        >
+          <View className="flex flex-row flex-wrap gap-y-4 gap-x-4">
+            {hairTypes.map((hairType) => (
+              <HairType
+                title={hairType.title}
+                value={hairType.value}
+                image={hairType.image}
+                key={hairType.value}
+                selectedHairType={selectedHairType}
+                setSelectedHairType={setSelectedHairType}
+              />
+            ))}
+          </View>
+        </ScrollView>
 
         {/* Sticky footer button */}
         <View className="absolute bottom-14 left-4 right-4">

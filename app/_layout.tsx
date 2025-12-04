@@ -14,7 +14,6 @@ import "./global.css";
 import Purchases, { LOG_LEVEL } from "react-native-purchases";
 
 import { useColorScheme } from "@/hooks/useColorScheme";
-import AdMobService from "@/services/adMobService";
 import { useEffect } from "react";
 import { SessionProvider, useSession } from "../ctx";
 import { SplashScreenController } from "../splash";
@@ -26,11 +25,6 @@ export default function RootLayout() {
     WorkSans: require("../assets/fonts/WorkSans-VariableFont_wght.ttf"),
     Borna: require("../assets/fonts/borna-medium.otf"),
   });
-
-  // Initialize AdMob when app starts
-  useEffect(() => {
-    AdMobService.initialize();
-  }, []);
 
   useEffect(() => {
     Purchases.setLogLevel(LOG_LEVEL.VERBOSE);

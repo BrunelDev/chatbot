@@ -8,7 +8,6 @@ import {
   StartConversationPayload,
   startOrContinueConversation,
 } from "@/services/chatBotService";
-import InterstitialAdService from "@/services/interstitialAdService";
 import { uploadToSupabase } from "@/services/storage/uploadToSupabase";
 import { Chat, defaultTheme, MessageType } from "@flyerhq/react-native-chat-ui";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -380,21 +379,10 @@ const Chatbot = () => {
         }
       };
       loadChatId();
-
-      InterstitialAdService.loadAd();
     }, [])
   );
 
   const handleSendPress = async (message: MessageType.PartialText) => {
-    const messageCount = messages.length;
-    if (
-      messageCount > 0 &&
-      messageCount % 3 === 0 &&
-      InterstitialAdService.isAdLoaded()
-    ) {
-      await InterstitialAdService.showAd();
-    }
-
     try {
       let uploadedImageUrl: string | undefined;
 
@@ -468,7 +456,7 @@ const Chatbot = () => {
       };
 
       setMessages((currentMessages) => [responseMessage, ...currentMessages]);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error sending message:", error);
 
       // ✅ Retirer le message de typing en cas d'erreur
@@ -477,14 +465,39 @@ const Chatbot = () => {
       );
       setIsTyping(false);
 
-      const errorMessage: MessageType.Text = {
-        author: assistantUser,
-        createdAt: Date.now(),
-        id: uuidv4(),
-        text: "Désolé, une erreur s'est produite. Veuillez réessayer.",
-        type: "text",
-      };
-      setMessages((currentMessages) => [errorMessage, ...currentMessages]);
+      // Check if this is a quota error
+      const { QuotaExceededError } = require("@/services/chatBotService");
+      if (error instanceof QuotaExceededError) {
+        const quotaData = error.quotaData;
+
+        // Display quota error message in chat
+        const quotaErrorMessage: MessageType.Text = {
+          author: assistantUser,
+          createdAt: Date.now(),
+          id: uuidv4(),
+          text: `⚠️ ${quotaData.message}\n\n📊 Quota: ${quotaData.remaining_requests}/${quotaData.daily_quota} requêtes restantes\n🤖 Modèle: ${quotaData.ai_model}`,
+          type: "text",
+        };
+        setMessages((currentMessages) => [
+          quotaErrorMessage,
+          ...currentMessages,
+        ]);
+
+        // Show upgrade modal if upgrade is required
+        if (quotaData.upgrade_required) {
+          setShowSubscriptionModal(true);
+        }
+      } else {
+        // Generic error message
+        const errorMessage: MessageType.Text = {
+          author: assistantUser,
+          createdAt: Date.now(),
+          id: uuidv4(),
+          text: "Désolé, une erreur s'est produite. Veuillez réessayer.",
+          type: "text",
+        };
+        setMessages((currentMessages) => [errorMessage, ...currentMessages]);
+      }
     }
   };
 

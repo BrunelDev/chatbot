@@ -1,6 +1,6 @@
 import { GoBack } from "@/components/headers/goBack";
 import { SubTitle, Title } from "@/components/textComponents/title";
-import { useFormStore, HAIR_TYPE_CHOICES } from "@/context/useFormStore";
+import { HAIR_TYPE_CHOICES, useFormStore } from "@/context/useFormStore";
 import { Image } from "expo-image";
 import { router } from "expo-router";
 import React from "react";
@@ -8,6 +8,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   SafeAreaView,
+  ScrollView,
   Text,
   TouchableOpacity,
   useWindowDimensions,
@@ -31,8 +32,13 @@ const hairTypesData = [
     image: require("../../assets/images/cheveux_boucles.png"),
   },
   {
-    title: "Cheveux frisés à crépus",
-    value: HAIR_TYPE_CHOICES.FriseCrepus,
+    title: "Cheveux frisés",
+    value: HAIR_TYPE_CHOICES.Frise,
+    image: require("../../assets/images/cheveux_frises.png"),
+  },
+  {
+    title: "Cheveux crépus",
+    value: HAIR_TYPE_CHOICES.Crepu,
     image: require("../../assets/images/cheveux_crepus.png"),
   },
 ];
@@ -51,8 +57,11 @@ export default function FormTwo() {
       case HAIR_TYPE_CHOICES.Boucle:
         setFormData({ hairType: HAIR_TYPE_CHOICES.Boucle });
         break;
-      case HAIR_TYPE_CHOICES.FriseCrepus:
-        setFormData({ hairType: HAIR_TYPE_CHOICES.FriseCrepus });
+      case HAIR_TYPE_CHOICES.Frise:
+        setFormData({ hairType: HAIR_TYPE_CHOICES.Frise });
+        break;
+      case HAIR_TYPE_CHOICES.Crepu:
+        setFormData({ hairType: HAIR_TYPE_CHOICES.Crepu });
         break;
       default:
         setFormData({ hairType: "" });
@@ -71,18 +80,23 @@ export default function FormTwo() {
           <Title title="Quel est votre type de cheveux ?" />
           <SubTitle title="Cette question nous permettra d’ identifier la texture principale pour personnaliser les conseils." />
         </View>
-        <View className="flex flex-row flex-wrap gap-y-4 gap-x-4">
-          {hairTypesData.map((type) => (
-            <HairType
-              key={type.value}
-              title={type.title}
-              value={type.value}
-              image={type.image}
-              active={hairType === type.value}
-              onPress={handleSelectHairType}
-            />
-          ))}
-        </View>
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={{ paddingBottom: 150 }}
+        >
+          <View className="flex flex-row flex-wrap gap-y-4 gap-x-4">
+            {hairTypesData.map((type) => (
+              <HairType
+                key={type.value}
+                title={type.title}
+                value={type.value}
+                image={type.image}
+                active={hairType === type.value}
+                onPress={handleSelectHairType}
+              />
+            ))}
+          </View>
+        </ScrollView>
 
         {/* Sticky footer button */}
         <View className="absolute w-full bottom-10 left-4 flex flex-row items-center justify-between ">

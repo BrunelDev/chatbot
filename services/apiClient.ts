@@ -114,6 +114,19 @@ export const handleApiError = (
       headers: error.response.headers,
     });
 
+    // Check if this is a quota error
+    const responseData = error.response.data;
+    if (
+      responseData?.error &&
+      responseData?.subscription_status &&
+      responseData?.daily_quota !== undefined &&
+      responseData?.remaining_requests !== undefined
+    ) {
+      // This is a quota error - import and throw QuotaExceededError
+      const { QuotaExceededError } = require("./chatBotService");
+      return new QuotaExceededError(responseData);
+    }
+
     // Extract error message with priority order
     let apiErrorMessage = customMessage;
 

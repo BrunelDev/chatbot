@@ -138,21 +138,51 @@ const ChatPage = () => {
 
       // Update messages with bot's response
       setMessages((currentMessages) => [responseMessage, ...currentMessages]);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error sending message:", error);
-      // Add error message to chat
-      const errorMessage: MessageType.Text = {
-        author: {
-          id: "06c33e8b-e835-4736-80f4-63f44b",
-          firstName: "UniSafe",
-          lastName: "Assistant",
-        },
-        createdAt: Date.now(),
-        id: uuidv4(),
-        text: "Désolé, une erreur s'est produite. Veuillez réessayer.",
-        type: "text",
-      };
-      setMessages((currentMessages) => [errorMessage, ...currentMessages]);
+
+      // Check if this is a quota error
+      const { QuotaExceededError } = require("@/services/chatBotService");
+      if (error instanceof QuotaExceededError) {
+        const quotaData = error.quotaData;
+
+        // Display quota error message in chat
+        const quotaErrorMessage: MessageType.Text = {
+          author: {
+            id: "06c33e8b-e835-4736-80f4-63f44b",
+            firstName: "UniSafe",
+            lastName: "Assistant",
+          },
+          createdAt: Date.now(),
+          id: uuidv4(),
+          text: `⚠️ ${quotaData.message}\n\n📊 Quota: ${quotaData.remaining_requests}/${quotaData.daily_quota} requêtes restantes\n🤖 Modèle: ${quotaData.ai_model}`,
+          type: "text",
+        };
+        setMessages((currentMessages) => [
+          quotaErrorMessage,
+          ...currentMessages,
+        ]);
+
+        // If upgrade is required, you could show an alert or modal here
+        if (quotaData.upgrade_required) {
+          // Note: This file doesn't have the premium modal, so we'll just log it
+          console.log("Upgrade required - consider showing upgrade prompt");
+        }
+      } else {
+        // Generic error message
+        const errorMessage: MessageType.Text = {
+          author: {
+            id: "06c33e8b-e835-4736-80f4-63f44b",
+            firstName: "UniSafe",
+            lastName: "Assistant",
+          },
+          createdAt: Date.now(),
+          id: uuidv4(),
+          text: "Désolé, une erreur s'est produite. Veuillez réessayer.",
+          type: "text",
+        };
+        setMessages((currentMessages) => [errorMessage, ...currentMessages]);
+      }
     }
   };
 

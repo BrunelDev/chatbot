@@ -10,7 +10,8 @@ export const hairTypeLabels: Record<HAIR_TYPE_CHOICES, string> = {
   [HAIR_TYPE_CHOICES.Lisse]: "Cheveux lisses",
   [HAIR_TYPE_CHOICES.Ondule]: "Cheveux ondulés",
   [HAIR_TYPE_CHOICES.Boucle]: "Cheveux bouclés",
-  [HAIR_TYPE_CHOICES.FriseCrepus]: "Cheveux frisés à crépus",
+  [HAIR_TYPE_CHOICES.Frise]: "Cheveux frisés",
+  [HAIR_TYPE_CHOICES.Crepu]: "Cheveux crépus",
   [HAIR_TYPE_CHOICES.Inconnu]: "Je ne sais pas",
 };
 

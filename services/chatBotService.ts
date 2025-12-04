@@ -18,6 +18,7 @@ export interface ConversationResponse {
   user_message: Message;
   ai_response: Message;
   can_use_voice: boolean;
+  quota_info?: QuotaInfo;
   ai_analysis?: {
     tokens_used: number;
     from_cache: boolean;
@@ -59,6 +60,33 @@ export interface CreateSessionPayload {
   title: string;
 }
 
+export interface QuotaError {
+  error: string;
+  message: string;
+  subscription_status: "free_trial" | "premium";
+  remaining_requests: number;
+  daily_quota: number;
+  ai_model: string;
+  upgrade_required: boolean;
+}
+
+export interface QuotaInfo {
+  remaining_requests: number;
+  daily_quota: number;
+  subscription_status: string;
+}
+
+// Custom error class for quota exceeded scenarios
+export class QuotaExceededError extends Error {
+  public quotaData: QuotaError;
+
+  constructor(quotaData: QuotaError) {
+    super(quotaData.message);
+    this.name = "QuotaExceededError";
+    this.quotaData = quotaData;
+  }
+}
+
 // #endregion
 
 // #region API Functions
@@ -98,16 +126,17 @@ export const interruptIa = async (sessionId: string): Promise<void> => {
  * Retrieves the list of past conversation sessions.
  * GET /chat/sessions/
  */
-export const getConversationHistory = async (): Promise<SessionsListResponse> => {
-  try {
-    const { data } = await apiClient.get<SessionsListResponse>(
-      "/chat/sessions/"
-    );
-    return data;
-  } catch (error) {
-    throw handleApiError(error, "Failed to fetch conversation history");
-  }
-};
+export const getConversationHistory =
+  async (): Promise<SessionsListResponse> => {
+    try {
+      const { data } = await apiClient.get<SessionsListResponse>(
+        "/chat/sessions/"
+      );
+      return data;
+    } catch (error) {
+      throw handleApiError(error, "Failed to fetch conversation history");
+    }
+  };
 
 /**
  * Deletes a specific conversation session.

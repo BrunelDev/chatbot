@@ -1,4 +1,3 @@
-import BannerAdComponent from "@/components/ads/BannerAdComponent";
 import { Tip } from "@/components/astuce";
 import { PrimaryHeader } from "@/components/headers/primaryHeader";
 import { Produit } from "@/components/produit";
@@ -186,8 +185,6 @@ export default function HomeScreen() {
         }
       >
         <View className="flex-1 flex flex-col gap-5 px-4 mt-5">
-          {/* Banner Ad */}
-          <BannerAdComponent className="mb-0" />
           <Text className="font-medium text-[20px] text-envy-700 font-borna">
             Bonjour {user?.user.username},
           </Text>

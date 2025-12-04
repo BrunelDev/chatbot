@@ -39,7 +39,8 @@ export enum HAIR_TYPE_CHOICES {
   Lisse = "lisse",
   Ondule = "ondule",
   Boucle = "boucle",
-  FriseCrepus = "frise_crepus",
+  Frise = "frise",
+  Crepu = "crepu",
   Inconnu = "inconnu",
 }
 
