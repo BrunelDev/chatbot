@@ -4,7 +4,9 @@ import { useImagePicker } from "@/hooks/useImagePicker";
 import { useUser } from "@/hooks/useUser";
 import {
   createConversationSession,
+  getConversationHistory,
   getFullConversation,
+  Recommandation,
   StartConversationPayload,
   startOrContinueConversation,
 } from "@/services/chatBotService";
@@ -23,6 +25,7 @@ import React, {
 import {
   Alert,
   Animated,
+  Linking,
   Text,
   TouchableOpacity,
   useWindowDimensions,
@@ -36,12 +39,19 @@ type ExtendedMessageType =
   | MessageType.Any
   | {
       id: string;
-      type: "image_with_text";
+      type: "image_with_text" | "text";
       author: { id: string; imageUrl?: any };
       text: string;
       imageFile: string | null;
       createdAt: number;
-    };
+      recommendations?: Recommandation[];
+    }
+  | (MessageType.Text & {
+      recommendations?: Recommandation[];
+      ai_analysis?: {
+        recommendations?: Recommandation[];
+      };
+    });
 
 const uuidv4 = () => {
   return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
@@ -141,7 +151,6 @@ const Chatbot = () => {
   ): MessageType.Any[] => {
     return messages.map((message) => {
       if (message.type === "image_with_text") {
-        // Pour les messages avec image et texte, on les traite comme des messages texte
         return {
           id: message.id,
           type: "text" as const,
@@ -194,6 +203,39 @@ const Chatbot = () => {
     }
   };
 
+  // ✅ Fonction utilitaire pour convertir Markdown en texte brut
+  const stripMarkdown = (text: string): string => {
+    return text
+      .replace(/\*\*(.*?)\*\*/g, "$1") // Bold
+      .replace(/\*(.*?)\*/g, "$1") // Italic
+      .replace(/__(.*?)__/g, "$1") // Bold
+      .replace(/_(.*?)_/g, "$1") // Italic
+      .replace(/\[(.*?)\]\(.*?\)/g, "$1") // Links
+      .replace(/`(.*?)`/g, "$1") // Inline code
+      .replace(/#{1,6}\s/g, "") // Headers
+      .replace(/>\s/g, "") // Blockquotes
+      .replace(/[-*+]\s/g, "") // Lists
+      .replace(/\d+\.\s/g, ""); // Numbered lists
+  };
+
+  // ✅ Fonction pour ouvrir le lien d'une recommandation
+  const handleRecommendationPress = async (url: string) => {
+    try {
+      const canOpen = await Linking.canOpenURL(url);
+      if (canOpen) {
+        await Linking.openURL(url);
+      } else {
+        Alert.alert("Erreur", "Impossible d'ouvrir ce lien");
+      }
+    } catch (error) {
+      console.error("Error opening URL:", error);
+      Alert.alert(
+        "Erreur",
+        "Une erreur est survenue lors de l'ouverture du lien"
+      );
+    }
+  };
+
   const renderBubbleAdvanced = ({
     child,
     message,
@@ -231,7 +273,16 @@ const Chatbot = () => {
               } text-international_orange-200 w-fit`}
             >
               <View className="px-2 py-3">
-                <Markdown>{message.text || ""}</Markdown>
+                {/* ✅ Option 1: Markdown avec sélection (limité) */}
+                <Text selectable={true}>
+                  <Markdown>{message.text || ""}</Markdown>
+                </Text>
+
+                {/* ✅ Option 2: Texte brut entièrement sélectionnable (recommandé)
+                <Text selectable={true} style={{ fontSize: 14, lineHeight: 20 }}>
+                  {stripMarkdown(message.text || "")}
+                </Text>
+                */}
               </View>
             </View>
             {/* Image */}
@@ -307,23 +358,113 @@ const Chatbot = () => {
             </View>
           </View>
         ) : isTextMessage ? (
-          <View
-            style={{
-              backgroundColor: isUserMessage ? "#FFFDC2" : "transparent",
-              borderColor: "transparent",
-              borderWidth: 0,
-              overflow: "hidden",
-              maxWidth:
-                isImageMessage || isImageWithTextMessage ? 250 : undefined,
-            }}
-            className={`${
-              isUserMessage ? "rounded-2xl" : "rounded-none"
-            } text-international_orange-200`}
-          >
-            <View className="px-2 py-3">
-              <Markdown>{message.text || ""}</Markdown>
+          <>
+            <View
+              style={{
+                backgroundColor: isUserMessage ? "#FFFDC2" : "transparent",
+                borderColor: "transparent",
+                borderWidth: 0,
+                overflow: "hidden",
+                maxWidth:
+                  isImageMessage || isImageWithTextMessage ? 250 : undefined,
+              }}
+              className={`${
+                isUserMessage ? "rounded-2xl" : "rounded-none"
+              } text-international_orange-200`}
+            >
+              <View className="px-2 py-3 relative">
+                <Markdown>{message.text || ""}</Markdown>
+
+                <Text className="text-transparent absolute top-0 left-0 h-full w-full" selectable={true}>
+                  {stripMarkdown(message.text || "")}
+                </Text>
+              </View>
             </View>
-          </View>
+            {/* Afficher les boutons de recommandations pour les messages du bot */}
+            {!isUserMessage &&
+              (() => {
+                // Récupérer les recommandations depuis recommendations ou ai_analysis.recommendations
+                let recommendations: Recommandation[] | undefined;
+
+                if (
+                  "recommendations" in message &&
+                  message.recommendations &&
+                  message.recommendations.length > 0
+                ) {
+                  recommendations = message.recommendations;
+                } else if (
+                  "ai_analysis" in message &&
+                  message.ai_analysis?.recommendations &&
+                  message.ai_analysis.recommendations.length > 0
+                ) {
+                  recommendations = message.ai_analysis.recommendations;
+                }
+
+                return recommendations && recommendations.length > 0 ? (
+                  <View className="mt-2 gap-2">
+                    {recommendations.map((recommendation) => (
+                      <TouchableOpacity
+                        key={recommendation.id}
+                        onPress={() =>
+                          handleRecommendationPress(recommendation.url)
+                        }
+                        activeOpacity={0.7}
+                        className="bg-white rounded-lg p-3 border border-envy-200"
+                        style={{
+                          shadowColor: "#000",
+                          shadowOffset: { width: 0, height: 1 },
+                          shadowOpacity: 0.1,
+                          shadowRadius: 2,
+                          elevation: 2,
+                        }}
+                      >
+                        <View className="flex-row items-center gap-3">
+                          {recommendation.image_url && (
+                            <Image
+                              source={{ uri: recommendation.image_url }}
+                              style={{ width: 50, height: 50, borderRadius: 8 }}
+                              contentFit="cover"
+                            />
+                          )}
+                          <View className="flex-1">
+                            <Text
+                              className="font-semibold text-sm text-envy-800"
+                              numberOfLines={1}
+                            >
+                              {recommendation.name}
+                            </Text>
+                            <Text
+                              className="text-xs text-envy-600 mt-1"
+                              numberOfLines={1}
+                            >
+                              {recommendation.brand}
+                            </Text>
+                            <View className="flex-row items-center gap-2 mt-1">
+                              <Text className="text-xs font-semibold text-envy-700">
+                                {recommendation.price}€
+                              </Text>
+                              {recommendation.rating > 0 && (
+                                <Text className="text-xs text-envy-600">
+                                  ⭐ {recommendation.rating}
+                                </Text>
+                              )}
+                            </View>
+                            {recommendation.reason && (
+                              <Text
+                                className="text-xs text-envy-600 mt-1"
+                                numberOfLines={2}
+                              >
+                                {recommendation.reason}
+                              </Text>
+                            )}
+                          </View>
+                        </View>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                ) : null;
+              })()}
+          </>
         ) : (
           <View
             style={{
@@ -350,29 +491,125 @@ const Chatbot = () => {
       const loadChatId = async () => {
         console.log("start");
         try {
-          const chatId = await AsyncStorage.getItem("chatId");
+          let chatId = await AsyncStorage.getItem("chatId");
+
           if (chatId) {
+            console.log("Current Session ID:", chatId);
             setCurrentChatId(chatId);
+            try {
+              const conversation = await getFullConversation(chatId);
+              console.log("messages :", conversation);
+              setMessages(
+                conversation.messages.reverse().map((message) => ({
+                  id: message.id.toString(),
+                  type: message.image_file ? "image_with_text" : "text",
+                  author:
+                    message.message_type === "user" ? user : assistantUser,
+                  text: message.content,
+                  imageFile: message.image_file,
+                  createdAt: Date.now(),
+                  recommendations: message.ai_analysis?.recommendations,
+                  ai_analysis: message.ai_analysis
+                    ? {
+                        recommendations: message.ai_analysis.recommendations,
+                      }
+                    : undefined,
+                }))
+              );
+            } catch (conversationError: any) {
+              if (
+                conversationError?.status === 404 ||
+                conversationError?.message?.includes("Session non trouvée") ||
+                conversationError?.response?.status === 404
+              ) {
+                console.log(
+                  "Session not found, checking API for latest session..."
+                );
+                // Session not found in storage, check API for latest session
+                try {
+                  const history = await getConversationHistory();
+                  if (history.results && history.results.length > 0) {
+                    // Sort by updated_at to get the most recent session
+                    const sortedSessions = [...history.results].sort(
+                      (a, b) =>
+                        new Date(b.updated_at).getTime() -
+                        new Date(a.updated_at).getTime()
+                    );
+                    const latestSession = sortedSessions[0];
+                    chatId = latestSession.session_id;
+                    setCurrentChatId(chatId);
+                    await AsyncStorage.setItem("chatId", chatId);
+                    setMessages([]);
+                  } else {
+                    // No sessions in API, create new one
+                    console.log(
+                      "No sessions found in API, creating a new one..."
+                    );
+                    const newSession = await createConversationSession({
+                      title: "Chat",
+                    });
+                    chatId = newSession.session_id;
+                    setCurrentChatId(chatId);
+                    await AsyncStorage.setItem("chatId", chatId);
+                    setMessages([]);
+                  }
+                } catch (historyError) {
+                  console.error(
+                    "Error fetching conversation history:",
+                    historyError
+                  );
+                  // If history fetch fails, create new session
+                  const newSession = await createConversationSession({
+                    title: "Chat",
+                  });
+                  chatId = newSession.session_id;
+                  setCurrentChatId(chatId);
+                  await AsyncStorage.setItem("chatId", chatId);
+                  setMessages([]);
+                }
+              } else {
+                throw conversationError;
+              }
+            }
           } else {
-            const newChatId = await createConversationSession({
-              title: "Chat",
-            });
-            setCurrentChatId(newChatId.session_id);
-            await AsyncStorage.setItem("chatId", newChatId.session_id);
-          }
-          if (chatId) {
-            const conversation = await getFullConversation(chatId!);
-            console.log(conversation.messages);
-            setMessages(
-              conversation.messages.reverse().map((message) => ({
-                id: message.id.toString(),
-                type: message.image_file ? "image_with_text" : "text",
-                author: message.message_type === "user" ? user : assistantUser,
-                text: message.content,
-                imageFile: message.image_file,
-                createdAt: Date.now(),
-              }))
+            // No chatId in storage, check API for latest session
+            console.log(
+              "No chatId in storage, checking API for latest session..."
             );
+            try {
+              const history = await getConversationHistory();
+              if (history.results && history.results.length > 0) {
+                // Sort by updated_at to get the most recent session
+                const sortedSessions = [...history.results].sort(
+                  (a, b) =>
+                    new Date(b.updated_at).getTime() -
+                    new Date(a.updated_at).getTime()
+                );
+                const latestSession = sortedSessions[0];
+                chatId = latestSession.session_id;
+                setCurrentChatId(chatId);
+                await AsyncStorage.setItem("chatId", chatId);
+              } else {
+                // No sessions in API, create new one
+                console.log("No sessions found in API, creating a new one...");
+                const newChatId = await createConversationSession({
+                  title: "Chat",
+                });
+                setCurrentChatId(newChatId.session_id);
+                await AsyncStorage.setItem("chatId", newChatId.session_id);
+              }
+            } catch (historyError) {
+              console.error(
+                "Error fetching conversation history:",
+                historyError
+              );
+              // If history fetch fails, create new session
+              const newChatId = await createConversationSession({
+                title: "Chat",
+              });
+              setCurrentChatId(newChatId.session_id);
+              await AsyncStorage.setItem("chatId", newChatId.session_id);
+            }
           }
         } catch (error) {
           console.error("Error loading chatId:", error);
@@ -419,9 +656,7 @@ const Chatbot = () => {
       messagesToAdd.push(textMessage);
 
       setMessages((currentMessages) => [...messagesToAdd, ...currentMessages]);
-      console.log("image: ", uploadedImageUrl);
 
-      // ✅ Ajouter le message de typing dans la liste
       const typingMessage: MessageType.Text = {
         author: assistantUser,
         createdAt: Date.now(),
@@ -439,7 +674,6 @@ const Chatbot = () => {
         uploadedImageUrl
       );
 
-      // ✅ Retirer le message de typing
       setMessages((currentMessages) =>
         currentMessages.filter((msg) => msg.id !== TYPING_MESSAGE_ID)
       );
@@ -447,30 +681,33 @@ const Chatbot = () => {
 
       setSelectedImage(null);
 
-      const responseMessage: MessageType.Text = {
+      const responseMessage: ExtendedMessageType = {
         author: assistantUser,
         createdAt: Date.now(),
         id: uuidv4(),
         text: response?.ai_response.content!,
         type: "text",
+        recommendations: response?.ai_analysis?.recommendations,
+        ai_analysis: response?.ai_analysis
+          ? {
+              recommendations: response.ai_analysis.recommendations,
+            }
+          : undefined,
       };
 
       setMessages((currentMessages) => [responseMessage, ...currentMessages]);
     } catch (error: any) {
       console.error("Error sending message:", error);
 
-      // ✅ Retirer le message de typing en cas d'erreur
       setMessages((currentMessages) =>
         currentMessages.filter((msg) => msg.id !== TYPING_MESSAGE_ID)
       );
       setIsTyping(false);
 
-      // Check if this is a quota error
       const { QuotaExceededError } = require("@/services/chatBotService");
       if (error instanceof QuotaExceededError) {
         const quotaData = error.quotaData;
 
-        // Display quota error message in chat
         const quotaErrorMessage: MessageType.Text = {
           author: assistantUser,
           createdAt: Date.now(),
@@ -483,12 +720,10 @@ const Chatbot = () => {
           ...currentMessages,
         ]);
 
-        // Show upgrade modal if upgrade is required
         if (quotaData.upgrade_required) {
           setShowSubscriptionModal(true);
         }
       } else {
-        // Generic error message
         const errorMessage: MessageType.Text = {
           author: assistantUser,
           createdAt: Date.now(),
@@ -530,10 +765,7 @@ const Chatbot = () => {
       console.log("🔍 Fetching offerings...");
       const offerings = await Purchases.getOfferings();
 
-      // ✅ Debug complet
       console.log("📦 Available offerings:", offerings);
-      console.log("📦 Current offering:", offerings.current);
-      console.log("📦 All offerings:", offerings.all);
 
       if (!offerings.current) {
         console.error("❌ No current offering found");
@@ -545,11 +777,6 @@ const Chatbot = () => {
       }
 
       const availablePackages = offerings.current.availablePackages;
-      console.log("📦 Available packages:", availablePackages);
-      console.log(
-        "📦 Package identifiers:",
-        availablePackages.map((p) => p.identifier)
-      );
 
       if (availablePackages.length === 0) {
         console.error("❌ No packages found in current offering");
@@ -560,18 +787,7 @@ const Chatbot = () => {
         return;
       }
 
-      // ✅ Utilise le premier package ou cherche par identifier
-      // Option 1: Prendre le premier package disponible
-      console.log(
-        "📦 Purchasing first available package...",
-        availablePackages
-      );
       const packageToPurchase = availablePackages[0];
-
-      // Option 2: Ou chercher par identifier spécifique (ex: "$rc_monthly")
-      // const packageToPurchase = availablePackages.find(
-      //   (p) => p.identifier === "$rc_monthly" || p.identifier === "monthly"
-      // );
 
       if (!packageToPurchase) {
         console.error("❌ No suitable package found");
@@ -585,8 +801,6 @@ const Chatbot = () => {
       );
 
       console.log("✅ Purchase successful");
-      console.log("👤 Customer info:", customerInfo);
-      console.log("🎁 Active entitlements:", customerInfo.entitlements.active);
 
       if (typeof customerInfo.entitlements.active["premium"] !== "undefined") {
         setIsPremium(true);
@@ -626,7 +840,8 @@ const Chatbot = () => {
           sendButtonVisibilityMode="always"
           emptyState={() => (
             <Text className="font-medium text-3xl text-envy-500 font-borna">
-              Bonjour {userData?.user?.username}, je suis ton coach capillaire
+              Bonjour {userData?.user?.username}, je suis ton coach capillaire.
+              Comment puis-je t'aider aujourd'hui ?
             </Text>
           )}
           messages={convertToChatMessages(messages)}
@@ -667,12 +882,12 @@ const Chatbot = () => {
               fontFamily: "WorkSans",
               fontSize: 14,
               color: "#121C12",
+              paddingBottom: 10,
+              paddingTop: 5,
               borderRadius: 12,
               borderWidth: 1,
               borderColor: "#E5E7EB",
               paddingHorizontal: 16,
-              paddingTop: 3,
-              paddingBottom: 10,
               marginHorizontal: 8,
               marginVertical: 8,
               backgroundColor: "#f3f4f6",
@@ -755,10 +970,11 @@ const sendMessageToRag = async (
     if (session_id) {
       payload.session_id = session_id;
     }
+    console.log("payload message : ", payload);
     const response = await startOrContinueConversation(payload);
     return response;
   } catch (error) {
     console.error("Error sending message:", error);
-    return null;
+    throw error;
   }
 };

@@ -11,6 +11,19 @@ export interface Message {
   image_file: string | null;
   metadata: object;
   timestamp: string;
+  ai_analysis: {
+    recommendations: Recommandation[];
+  };
+}
+export interface Recommandation {
+  id: string;
+  name: string;
+  brand: string;
+  price: number;
+  rating: number;
+  reason: string;
+  url: string;
+  image_url: string;
 }
 
 export interface ConversationResponse {
@@ -22,7 +35,8 @@ export interface ConversationResponse {
   ai_analysis?: {
     tokens_used: number;
     from_cache: boolean;
-    recommendations: any[];
+
+    recommendations: Recommandation[];
     response_time: number;
   };
 }
@@ -104,6 +118,7 @@ export const startOrContinueConversation = async (
       "/chat/start/",
       payload
     );
+    console.log("CHAT response ", data);
     return data;
   } catch (error) {
     throw handleApiError(error, "Failed to start or continue conversation");
@@ -162,7 +177,14 @@ export const getFullConversation = async (
       `/chat/sessions/${sessionId}/messages/`
     );
     return data;
-  } catch (error) {
+  } catch (error: any) {
+    // Re-throw 404 errors with status preserved so caller can handle session not found
+    if (error?.response?.status === 404) {
+      const notFoundError = new Error("Session non trouvée") as any;
+      notFoundError.status = 404;
+      notFoundError.isSessionNotFound = true;
+      throw notFoundError;
+    }
     throw handleApiError(error, "Failed to fetch full conversation");
   }
 };

@@ -7,13 +7,14 @@ import {
 import { useFonts } from "expo-font";
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import { Platform, Text } from "react-native";
+import { Text } from "react-native";
 import "react-native-reanimated";
 import "./global.css";
 
 import Purchases, { LOG_LEVEL } from "react-native-purchases";
 
 import { useColorScheme } from "@/hooks/useColorScheme";
+import RevenueCatService from "@/services/revenueCatService";
 import { useEffect } from "react";
 import { SessionProvider, useSession } from "../ctx";
 import { SplashScreenController } from "../splash";
@@ -28,14 +29,8 @@ export default function RootLayout() {
 
   useEffect(() => {
     Purchases.setLogLevel(LOG_LEVEL.VERBOSE);
-
-    if (Platform.OS === "ios") {
-      Purchases.configure({
-        apiKey: "appl_EQydqfvsncAoKXNhSbzwIUUPaRb",
-      });
-    } else if (Platform.OS === "android") {
-      console.log("Android");
-    }
+    // Use the service for initialization to ensure consistent configuration across platforms
+    RevenueCatService.initialize();
   }, []);
 
   if (!loaded) {

@@ -7,7 +7,7 @@ import * as FileSystem from "expo-file-system/legacy";
 export const deleteAllUserData = async (): Promise<void> => {
   try {
     console.log(
-      "🧹 Début de la suppression de toutes les données utilisateur..."
+      "🧹 Début de la suppression de toutes les données utilisateur...",
     );
 
     // 1. Supprimer toutes les données AsyncStorage
@@ -50,11 +50,11 @@ const deleteAllProfileImages = async (): Promise<void> => {
     if (dirInfo.exists) {
       const files = await FileSystem.readDirectoryAsync(appDirectory);
       const profileImages = files.filter((file) =>
-        file.startsWith("profile_image_")
+        file.startsWith("profile_image_"),
       );
 
       console.log(
-        `📸 Suppression de ${profileImages.length} image(s) de profil...`
+        `📸 Suppression de ${profileImages.length} image(s) de profil...`,
       );
 
       // Supprimer toutes les images de profil
@@ -90,7 +90,7 @@ const cleanupImagesDirectory = async (): Promise<void> => {
         console.log("📁 Dossier images supprimé (vide)");
       } else {
         console.log(
-          `📁 Dossier images conservé (${files.length} fichier(s) restant(s))`
+          `📁 Dossier images conservé (${files.length} fichier(s) restant(s))`,
         );
       }
     }
@@ -113,7 +113,7 @@ export const deleteSessionData = async (): Promise<void> => {
       "userInfo",
       "accountType",
       "isOnboardingComplete",
-      "chatId",
+      //"chatId",
     ];
 
     await AsyncStorage.multiRemove(sessionKeys);
@@ -121,7 +121,7 @@ export const deleteSessionData = async (): Promise<void> => {
   } catch (error) {
     console.error(
       "❌ Erreur lors de la suppression des données de session:",
-      error
+      error,
     );
     throw error;
   }

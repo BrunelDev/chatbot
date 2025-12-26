@@ -41,7 +41,7 @@ class RevenueCatService {
   // Clés API RevenueCat (remplacez par vos vraies clés)
   private static readonly API_KEYS = {
     ANDROID: "rcat_android_key_here", // Remplacez par votre clé Android
-    IOS: "rcat_ios_key_here", // Remplacez par votre clé iOS
+    IOS: "appl_EQydqfvsncAoKXNhSbzwIUUPaRb",
   };
 
   // Identifiants des produits d'abonnement
@@ -164,7 +164,7 @@ class RevenueCatService {
         success: true,
         customerInfo,
       };
-    } catch (error) {
+    } catch (error: any) {
       console.error("Erreur lors de l'achat:", error);
 
       if (error instanceof PurchasesError) {
