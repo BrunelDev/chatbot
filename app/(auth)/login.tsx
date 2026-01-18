@@ -1,6 +1,7 @@
 "use client";
 
 import accountService from "@/services/accountService";
+import { ValidationError } from "@/services/apiClient";
 import { useState } from "react";
 import {
   Alert,
@@ -29,6 +30,7 @@ export default function AuthScreen() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(true);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string[]>>({});
   const { signIn } = useSession();
 
   const handleBack = () => {};
@@ -38,6 +40,7 @@ export default function AuthScreen() {
   };
 
   const handleLogin = async () => {
+    setFieldErrors({}); // Reset errors
     try {
       const response = await accountService.login({ email, password });
 
@@ -99,7 +102,17 @@ export default function AuthScreen() {
       console.log(response);
     } catch (error) {
       console.error("Login failed:", error);
-      Alert.alert("Erreur de connexion", "Identifiants invalides.");
+      if (error instanceof ValidationError) {
+        console.log("errors fields: ", error.errors);
+        if (error.errors.non_field_errors) {
+          Alert.alert("Erreur de connexion", error.errors.non_field_errors[0]);
+        }
+        setFieldErrors(error.errors);
+      } else {
+        const errorMessage =
+          error instanceof Error ? error.message : "Identifiants invalides.";
+        Alert.alert("Erreur de connexion", errorMessage);
+      }
     }
   };
 
@@ -142,6 +155,9 @@ export default function AuthScreen() {
                     />
                   </View>
                 </View>
+                {fieldErrors.email && (
+                  <Text style={styles.errorText}>{fieldErrors.email[0]}</Text>
+                )}
 
                 {/* Password Input */}
                 <View style={styles.inputContainer}>
@@ -167,6 +183,11 @@ export default function AuthScreen() {
                     </TouchableOpacity>
                   </View>
                 </View>
+                {fieldErrors.password && (
+                  <Text style={styles.errorText}>
+                    {fieldErrors.password[0]}
+                  </Text>
+                )}
 
                 {/* Forgot Password */}
                 <TouchableOpacity style={styles.forgotPassword}>
@@ -336,5 +357,12 @@ const styles = StyleSheet.create({
   signupLink: {
     fontSize: 14,
     color: "#A46C04",
+  },
+  errorText: {
+    color: "red",
+    fontSize: 12,
+    marginTop: 5,
+    marginLeft: 5,
+    fontFamily: "WorkSans",
   },
 });

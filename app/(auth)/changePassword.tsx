@@ -68,7 +68,11 @@ export default function AuthScreen() {
         ]
       );
     } catch (error) {
-      Alert.alert("Erreur", "Une erreur est survenue lors de la connexion.");
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : "Une erreur est survenue lors de la connexion.";
+      Alert.alert("Erreur", errorMessage);
     }
   };
 

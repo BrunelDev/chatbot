@@ -82,16 +82,16 @@ export default function Profile() {
         Alert.alert(
           "Succès",
           "Votre photo de profil a été mise à jour avec succès !",
-          [{ text: "OK" }],
+          [{ text: "OK" }]
         );
       }
     } catch (error) {
       console.error("Erreur lors de la sélection de l'image:", error);
-      Alert.alert(
-        "Erreur",
-        "Une erreur est survenue lors de la mise à jour de votre photo de profil.",
-        [{ text: "OK" }],
-      );
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : "Une erreur est survenue lors de la mise à jour de votre photo de profil.";
+      Alert.alert("Erreur", errorMessage, [{ text: "OK" }]);
     }
   };
   const handleLogout = async () => {
@@ -110,7 +110,7 @@ export default function Profile() {
             signOut(); // Utilise le contexte d'authentification
           },
         },
-      ],
+      ]
     );
   };
 
@@ -133,7 +133,9 @@ export default function Profile() {
     } catch (error: any) {
       Alert.alert(
         "Erreur",
-        error.message || "Impossible de supprimer le compte.",
+        error instanceof Error
+          ? error.message
+          : "Impossible de supprimer le compte."
       );
     }
   };
@@ -152,7 +154,7 @@ export default function Profile() {
         opacity={0.5}
       />
     ),
-    [],
+    []
   );
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>

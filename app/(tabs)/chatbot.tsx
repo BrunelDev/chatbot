@@ -23,6 +23,7 @@ import React, {
   useState,
 } from "react";
 import {
+  ActivityIndicator,
   Alert,
   Animated,
   Linking,
@@ -68,6 +69,7 @@ const Chatbot = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [currentChatId, setCurrentChatId] = useState<string | undefined>();
   const [isTyping, setIsTyping] = useState(false);
+  const [isLoadingMessages, setIsLoadingMessages] = useState(false);
 
   // ✅ Component d'animation interne pour les points
   const TypingDots = () => {
@@ -229,10 +231,11 @@ const Chatbot = () => {
       }
     } catch (error) {
       console.error("Error opening URL:", error);
-      Alert.alert(
-        "Erreur",
-        "Une erreur est survenue lors de l'ouverture du lien"
-      );
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : "Une erreur est survenue lors de l'ouverture du lien";
+      Alert.alert("Erreur", errorMessage);
     }
   };
 
@@ -375,7 +378,10 @@ const Chatbot = () => {
               <View className="px-2 py-3 relative">
                 <Markdown>{message.text || ""}</Markdown>
 
-                <Text className="text-transparent absolute top-0 left-0 h-full w-full" selectable={true}>
+                <Text
+                  className="text-transparent absolute top-0 left-0 h-full w-full"
+                  selectable={true}
+                >
                   {stripMarkdown(message.text || "")}
                 </Text>
               </View>
@@ -489,7 +495,30 @@ const Chatbot = () => {
   useFocusEffect(
     useCallback(() => {
       const loadChatId = async () => {
+        setIsLoadingMessages(true);
         console.log("start");
+
+        const fetchAndSetMessages = async (id: string) => {
+          const conversation = await getFullConversation(id);
+          console.log("messages :", JSON.stringify(conversation, null, 2));
+          setMessages(
+            conversation.messages.reverse().map((message) => ({
+              id: message.id.toString(),
+              type: message.image_file ? "image_with_text" : "text",
+              author: message.message_type === "user" ? user : assistantUser,
+              text: message.content,
+              imageFile: message.image_file,
+              createdAt: Date.now(),
+              recommendations: message.ai_analysis?.recommendations,
+              ai_analysis: message.ai_analysis
+                ? {
+                    recommendations: message.ai_analysis.recommendations,
+                  }
+                : undefined,
+            }))
+          );
+        };
+
         try {
           let chatId = await AsyncStorage.getItem("chatId");
 
@@ -497,25 +526,7 @@ const Chatbot = () => {
             console.log("Current Session ID:", chatId);
             setCurrentChatId(chatId);
             try {
-              const conversation = await getFullConversation(chatId);
-              console.log("messages :", conversation);
-              setMessages(
-                conversation.messages.reverse().map((message) => ({
-                  id: message.id.toString(),
-                  type: message.image_file ? "image_with_text" : "text",
-                  author:
-                    message.message_type === "user" ? user : assistantUser,
-                  text: message.content,
-                  imageFile: message.image_file,
-                  createdAt: Date.now(),
-                  recommendations: message.ai_analysis?.recommendations,
-                  ai_analysis: message.ai_analysis
-                    ? {
-                        recommendations: message.ai_analysis.recommendations,
-                      }
-                    : undefined,
-                }))
-              );
+              await fetchAndSetMessages(chatId);
             } catch (conversationError: any) {
               if (
                 conversationError?.status === 404 ||
@@ -539,7 +550,7 @@ const Chatbot = () => {
                     chatId = latestSession.session_id;
                     setCurrentChatId(chatId);
                     await AsyncStorage.setItem("chatId", chatId);
-                    setMessages([]);
+                    await fetchAndSetMessages(chatId);
                   } else {
                     // No sessions in API, create new one
                     console.log(
@@ -589,6 +600,7 @@ const Chatbot = () => {
                 chatId = latestSession.session_id;
                 setCurrentChatId(chatId);
                 await AsyncStorage.setItem("chatId", chatId);
+                await fetchAndSetMessages(chatId);
               } else {
                 // No sessions in API, create new one
                 console.log("No sessions found in API, creating a new one...");
@@ -613,6 +625,8 @@ const Chatbot = () => {
           }
         } catch (error) {
           console.error("Error loading chatId:", error);
+        } finally {
+          setIsLoadingMessages(false);
         }
       };
       loadChatId();
@@ -724,11 +738,16 @@ const Chatbot = () => {
           setShowSubscriptionModal(true);
         }
       } else {
+        const errorMessageText =
+          error instanceof Error
+            ? error.message
+            : "Désolé, une erreur s'est produite. Veuillez réessayer.";
+
         const errorMessage: MessageType.Text = {
           author: assistantUser,
           createdAt: Date.now(),
           id: uuidv4(),
-          text: "Désolé, une erreur s'est produite. Veuillez réessayer.",
+          text: errorMessageText,
           type: "text",
         };
         setMessages((currentMessages) => [errorMessage, ...currentMessages]);
@@ -836,113 +855,125 @@ const Chatbot = () => {
         <ChatHeadBar onMenuPress={() => setIsSidebarOpen(true)} />
       </View>
       <View className="flex-1">
-        <Chat
-          sendButtonVisibilityMode="always"
-          emptyState={() => (
-            <Text className="font-medium text-3xl text-envy-500 font-borna">
-              Bonjour {userData?.user?.username}, je suis ton coach capillaire.
-              Comment puis-je t'aider aujourd'hui ?
-            </Text>
-          )}
-          messages={convertToChatMessages(messages)}
-          onSendPress={handleSendPress}
-          onAttachmentPress={handleAttachmentPress}
-          user={user}
-          renderBubble={(props) => renderBubbleAdvanced(props)}
-          theme={{
-            ...defaultTheme,
-            colors: {
-              ...defaultTheme.colors,
-              primary: "#FFEED3",
-              background: "#FEFDE8",
-              inputBackground: "#FEFDE8",
-            },
-            icons: {
-              sendButtonIcon: () => (
-                <View className="bg-candlelight-500 rounded-full p-2">
-                  <Image
-                    source={require("@/assets/icons/send.svg")}
-                    style={{ width: 20, height: 20 }}
-                  />
-                </View>
-              ),
-              attachmentButtonIcon: () => (
-                <Image
-                  source={require("@/assets/icons/paperclip.svg")}
-                  style={{ width: 20, height: 20 }}
-                  className="mr-6"
-                />
-              ),
-            },
-          }}
-          textInputProps={{
-            placeholder: " Envoyer un message",
-            placeholderTextColor: "#99AFBB",
-            style: {
-              fontFamily: "WorkSans",
-              fontSize: 14,
-              color: "#121C12",
-              paddingBottom: 10,
-              paddingTop: 5,
-              borderRadius: 12,
-              borderWidth: 1,
-              borderColor: "#E5E7EB",
-              paddingHorizontal: 16,
-              marginHorizontal: 8,
-              marginVertical: 8,
-              backgroundColor: "#f3f4f6",
-            },
-          }}
-        />
+        {isLoadingMessages ? (
+          <View className="flex-1 justify-center items-center">
+            <ActivityIndicator size="large" color="#587950" />
+          </View>
+        ) : (
+          <>
+            <Chat
+              sendButtonVisibilityMode="always"
+              emptyState={() => (
+                <Text className="font-medium text-3xl text-envy-500 font-borna">
+                  Bonjour {userData?.user?.username}, je suis ton coach
+                  capillaire. Comment puis-je t'aider aujourd'hui ?
+                </Text>
+              )}
+              messages={convertToChatMessages(messages)}
+              onSendPress={handleSendPress}
+              onAttachmentPress={handleAttachmentPress}
+              user={user}
+              renderBubble={(props) => renderBubbleAdvanced(props)}
+              theme={{
+                ...defaultTheme,
+                colors: {
+                  ...defaultTheme.colors,
+                  primary: "#FFEED3",
+                  background: "#FEFDE8",
+                  inputBackground: "#FEFDE8",
+                },
+                icons: {
+                  sendButtonIcon: () => (
+                    <View className="bg-candlelight-500 rounded-full p-2">
+                      <Image
+                        source={require("@/assets/icons/send.svg")}
+                        style={{ width: 20, height: 20 }}
+                      />
+                    </View>
+                  ),
+                  attachmentButtonIcon: () => (
+                    <Image
+                      source={require("@/assets/icons/paperclip.svg")}
+                      style={{ width: 20, height: 20 }}
+                      className="mr-6"
+                    />
+                  ),
+                },
+              }}
+              textInputProps={{
+                placeholder: " Envoyer un message",
+                placeholderTextColor: "#99AFBB",
+                style: {
+                  fontFamily: "WorkSans",
+                  fontSize: 14,
+                  color: "#121C12",
+                  paddingBottom: 10,
+                  paddingTop: 5,
+                  borderRadius: 12,
+                  borderWidth: 1,
+                  borderColor: "#E5E7EB",
+                  paddingHorizontal: 16,
+                  marginHorizontal: 8,
+                  marginVertical: 8,
+                  backgroundColor: "#f3f4f6",
+                },
+              }}
+            />
 
-        {selectedImage && (
-          <View
-            style={{
-              position: "absolute",
-              top: 0,
-              left: 8,
-              backgroundColor: "#FEFDE8",
-              borderRadius: 12,
-              padding: 8,
-              shadowColor: "#000",
-              shadowOffset: { width: 0, height: 2 },
-              shadowOpacity: 0.1,
-              shadowRadius: 4,
-              elevation: 3,
-            }}
-            className="bg-candlelight-50"
-          >
-            <View style={{ position: "relative" }}>
-              <Image
-                source={{ uri: selectedImage.uri }}
-                style={{
-                  width: width - 32,
-                  height: width / 1.5,
-                  borderRadius: 8,
-                }}
-              />
-              <TouchableOpacity
-                onPress={handleRemoveImage}
+            {selectedImage && (
+              <View
                 style={{
                   position: "absolute",
-                  top: -8,
-                  right: -8,
-                  backgroundColor: "#EF4444",
+                  top: 0,
+                  left: 8,
+                  backgroundColor: "#FEFDE8",
                   borderRadius: 12,
-                  width: 24,
-                  height: 24,
-                  justifyContent: "center",
-                  alignItems: "center",
+                  padding: 8,
+                  shadowColor: "#000",
+                  shadowOffset: { width: 0, height: 2 },
+                  shadowOpacity: 0.1,
+                  shadowRadius: 4,
+                  elevation: 3,
                 }}
+                className="bg-candlelight-50"
               >
-                <Text
-                  style={{ color: "white", fontSize: 16, fontWeight: "bold" }}
-                >
-                  ×
-                </Text>
-              </TouchableOpacity>
-            </View>
-          </View>
+                <View style={{ position: "relative" }}>
+                  <Image
+                    source={{ uri: selectedImage.uri }}
+                    style={{
+                      width: width - 32,
+                      height: width / 1.5,
+                      borderRadius: 8,
+                    }}
+                  />
+                  <TouchableOpacity
+                    onPress={handleRemoveImage}
+                    style={{
+                      position: "absolute",
+                      top: -8,
+                      right: -8,
+                      backgroundColor: "#EF4444",
+                      borderRadius: 12,
+                      width: 24,
+                      height: 24,
+                      justifyContent: "center",
+                      alignItems: "center",
+                    }}
+                  >
+                    <Text
+                      style={{
+                        color: "white",
+                        fontSize: 16,
+                        fontWeight: "bold",
+                      }}
+                    >
+                      ×
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            )}
+          </>
         )}
       </View>
 

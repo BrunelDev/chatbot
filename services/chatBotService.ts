@@ -111,16 +111,18 @@ export class QuotaExceededError extends Error {
  * POST /chat/start/
  */
 export const startOrContinueConversation = async (
-  payload: StartConversationPayload
+  payload: StartConversationPayload,
 ): Promise<ConversationResponse> => {
   try {
+    console.log("Starting conversation... at :", new Date().toISOString());
     const { data } = await apiClient.post<ConversationResponse>(
       "/chat/start/",
-      payload
+      payload,
     );
     console.log("CHAT response ", data);
     return data;
   } catch (error) {
+    console.log("Voici l'erreur: at: ", new Date().toISOString(), error);
     throw handleApiError(error, "Failed to start or continue conversation");
   }
 };
@@ -144,9 +146,8 @@ export const interruptIa = async (sessionId: string): Promise<void> => {
 export const getConversationHistory =
   async (): Promise<SessionsListResponse> => {
     try {
-      const { data } = await apiClient.get<SessionsListResponse>(
-        "/chat/sessions/"
-      );
+      const { data } =
+        await apiClient.get<SessionsListResponse>("/chat/sessions/");
       return data;
     } catch (error) {
       throw handleApiError(error, "Failed to fetch conversation history");
@@ -170,11 +171,11 @@ export const deleteConversationSession = async (id: number): Promise<void> => {
  * GET /chat/sessions/{session_id}/messages/
  */
 export const getFullConversation = async (
-  sessionId: string
+  sessionId: string,
 ): Promise<SessionMessagesResponse> => {
   try {
     const { data } = await apiClient.get<SessionMessagesResponse>(
-      `/chat/sessions/${sessionId}/messages/`
+      `/chat/sessions/${sessionId}/messages/`,
     );
     return data;
   } catch (error: any) {
@@ -194,7 +195,7 @@ export const getFullConversation = async (
  * POST /chat/sessions/
  */
 export const createConversationSession = async (
-  payload: CreateSessionPayload
+  payload: CreateSessionPayload,
 ): Promise<Session> => {
   try {
     const { data } = await apiClient.post<Session>("/chat/sessions/", payload);

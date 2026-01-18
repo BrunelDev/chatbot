@@ -49,7 +49,11 @@ export default function AuthScreen() {
       console.log(response);
     } catch (error) {
       console.log(error);
-      Alert.alert("Attention", "Votre mot de passe est courant")
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : "Votre mot de passe est courant";
+      Alert.alert("Attention", errorMessage);
     }
   };
 

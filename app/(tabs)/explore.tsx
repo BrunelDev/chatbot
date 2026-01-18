@@ -47,10 +47,11 @@ export default function Explore() {
         const homeResponse = await profileService.getHome();
         setHomeData(homeResponse);
       } catch (error) {
-        Alert.alert(
-          "Erreur",
-          "Une erreur est survenue lors de la récupération des données."
-        );
+        const errorMessage =
+          error instanceof Error
+            ? error.message
+            : "Une erreur est survenue lors de la récupération des données.";
+        Alert.alert("Erreur", errorMessage);
         console.error(error);
       } finally {
         setIsLoading(false);
@@ -72,10 +73,11 @@ export default function Explore() {
       const homeResponse = await profileService.getHome();
       setHomeData(homeResponse);
     } catch (error) {
-      Alert.alert(
-        "Erreur",
-        "Une erreur est survenue lors de la récupération des données."
-      );
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : "Une erreur est survenue lors de la récupération des données.";
+      Alert.alert("Erreur", errorMessage);
       console.error(error);
     } finally {
       setIsRefreshing(false);

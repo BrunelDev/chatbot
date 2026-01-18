@@ -19,11 +19,12 @@ interface ApiErrorResponse {
   ai_model?: string;
   upgrade_required?: boolean;
   data?: Record<string, string[] | string>;
+  details?: string;
 }
 
 const apiClient = axios.create({
   baseURL: process.env.EXPO_PUBLIC_API_URL,
-  timeout: 10000, // 10 secondes
+  timeout: 100000, // 1 minute
   headers: {
     "Content-Type": "application/json",
     Accept: "application/json",
@@ -148,6 +149,18 @@ apiClient.interceptors.response.use(
   }
 );
 
+export class ValidationError extends Error {
+  errors: Record<string, string[]>;
+
+  constructor(errors: Record<string, string[]>) {
+    // Create a meaningful message by joining all error messages
+    const message = Object.values(errors).flat().join("\n");
+    super(message || "Validation Error");
+    this.name = "ValidationError";
+    this.errors = errors;
+  }
+}
+
 /**
  * Gestionnaire d'erreur API centralisé.
  * @param error L'objet erreur capturé dans le bloc catch.
@@ -168,6 +181,34 @@ export const handleApiError = (
 
     const responseData = error.response.data;
 
+    // Gestion des erreurs de validation (400)
+    if (error.response.status === 400 && responseData) {
+      // Cas standard DRF: { field: ["error1"], field2: ["error2"] }
+      // On vérifie si responseData ressemble à un objet d'erreurs.
+      // On exige qu'au moins une valeur soit un tableau pour éviter de capturer { detail: "msg" }
+      const values = Object.values(responseData);
+      const hasArrayErrors = values.some((val) => Array.isArray(val));
+      const areValuesValid = values.every(
+        (val) => Array.isArray(val) || typeof val === "string"
+      );
+
+      // Important: On s'assure que ce n'est PAS le format standard (error/message)
+      const isStandardError =
+        "error" in responseData || "message" in responseData;
+
+      if (hasArrayErrors && areValuesValid && !isStandardError) {
+        const normalizedErrors: Record<string, string[]> = {};
+        Object.entries(responseData).forEach(([key, value]) => {
+          if (Array.isArray(value)) {
+            normalizedErrors[key] = value;
+          } else if (typeof value === "string") {
+            normalizedErrors[key] = [value];
+          }
+        });
+        return new ValidationError(normalizedErrors);
+      }
+    }
+
     // Vérification si c'est une erreur de quota
     if (
       responseData?.error &&
@@ -175,7 +216,7 @@ export const handleApiError = (
       responseData?.daily_quota !== undefined &&
       responseData?.remaining_requests !== undefined
     ) {
-      // Construction d'un objet QuotaError complet avec toutes les propriétés requises
+      // ... (existing quota logic)
       const quotaError: QuotaError = {
         error: responseData.error,
         message:
@@ -191,21 +232,25 @@ export const handleApiError = (
       return new QuotaExceededError(quotaError);
     }
 
-    // Extraction du message d'erreur avec ordre de priorité
+    // Extraction du message d'erreur avec ordre de priorité pour le format Standard
     let apiErrorMessage = customMessage;
 
     if (responseData?.message) {
       apiErrorMessage = responseData.message;
+    } else if (responseData?.error) {
+      // Si "error" est présent, on l'utilise si message n'est pas défini
+      apiErrorMessage = responseData.error;
     } else if (responseData?.detail) {
       apiErrorMessage = responseData.detail;
     } else if (responseData?.data) {
-      // Gestion des erreurs spécifiques aux champs
+      // Gestion des erreurs spécifiques aux champs (cas fallback)
       const fieldErrors = responseData.data;
       const errorMessages: string[] = [];
 
       Object.keys(fieldErrors).forEach((field) => {
         const fieldErrorArray = fieldErrors[field];
         if (Array.isArray(fieldErrorArray)) {
+          // @ts-ignore
           errorMessages.push(...fieldErrorArray);
         } else if (typeof fieldErrorArray === "string") {
           errorMessages.push(fieldErrorArray);
@@ -215,6 +260,11 @@ export const handleApiError = (
       if (errorMessages.length > 0) {
         apiErrorMessage = errorMessages.join(". ");
       }
+    }
+
+    // Log des détails techniques si présents (debug only)
+    if (responseData?.details) {
+      console.log("Error Details:", responseData.details);
     }
 
     return new Error(apiErrorMessage);

@@ -63,7 +63,9 @@ export default function OtpPage() {
           params: { email: effectiveEmail, code },
         });
       } catch (error) {
-        Alert.alert("Échec de vérification");
+        const errorMessage =
+          error instanceof Error ? error.message : "Échec de vérification";
+        Alert.alert(errorMessage);
         console.error("Failed to verify email:", error);
       }
     } else {
@@ -110,7 +112,9 @@ export default function OtpPage() {
         router.replace("/(auth)/login");
       }
     } catch (error) {
-      Alert.alert("Échec de vérification");
+      const errorMessage =
+        error instanceof Error ? error.message : "Échec de vérification";
+      Alert.alert(errorMessage);
       console.error("Failed to verify email:", error);
     }
   };
@@ -183,7 +187,11 @@ export default function OtpPage() {
                   });
                   Alert.alert("Code de vérification renvoyé avec succès.");
                 } catch (error: unknown) {
-                  Alert.alert("Échec de renvoi du code de vérification.");
+                  const errorMessage =
+                    error instanceof Error
+                      ? error.message
+                      : "Échec de renvoi du code de vérification.";
+                  Alert.alert(errorMessage);
                   console.error("Failed to resend verification code:", error);
                 }
               }}

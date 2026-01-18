@@ -194,7 +194,7 @@ const accountService = {
       );
       return data;
     } catch (error) {
-      throw handleApiError(error, "Login failed.");
+      throw handleApiError(error, "Indentifiants invalides.");
     }
   },
 

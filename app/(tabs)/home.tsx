@@ -35,10 +35,11 @@ export default function HomeScreen() {
       Alert.alert("Déconnexion", "Vous avez été déconnecté avec succès.");
     } catch (error) {
       console.error("Failed to logout:", error);
-      Alert.alert(
-        "Erreur",
-        "Une erreur est survenue lors de la déconnexion. Veuillez réessayer."
-      );
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : "Une erreur est survenue lors de la déconnexion. Veuillez réessayer.";
+      Alert.alert("Erreur", errorMessage);
     }
   };
 
@@ -62,8 +63,9 @@ export default function HomeScreen() {
             } catch (error: any) {
               Alert.alert(
                 "Erreur",
-                error.message ||
-                  "Une erreur est survenue lors de la suppression de votre compte."
+                error instanceof Error
+                  ? error.message
+                  : "Une erreur est survenue lors de la suppression de votre compte."
               );
             }
           },
@@ -133,10 +135,11 @@ export default function HomeScreen() {
         setMarketplaceData(marketplaceResponse);
         setProducts(marketplaceResponse.recommendations);
       } catch (error) {
-        Alert.alert(
-          "Erreur",
-          "Une erreur est survenue lors de la récupération des données."
-        );
+        const errorMessage =
+          error instanceof Error
+            ? error.message
+            : "Une erreur est survenue lors de la récupération des données.";
+        Alert.alert("Erreur", errorMessage);
         console.error(error);
       } finally {
         setIsLoading(false);
@@ -155,10 +158,11 @@ export default function HomeScreen() {
       setMarketplaceData(marketplaceResponse);
       setProducts(marketplaceResponse.recommendations);
     } catch (error) {
-      Alert.alert(
-        "Erreur",
-        "Une erreur est survenue lors de la récupération des données."
-      );
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : "Une erreur est survenue lors de la récupération des données.";
+      Alert.alert("Erreur", errorMessage);
       console.error(error);
     } finally {
       setIsRefreshing(false);
