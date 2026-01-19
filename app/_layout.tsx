@@ -9,13 +9,14 @@ import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { Text } from "react-native";
 import "react-native-reanimated";
+import { SafeAreaProvider } from "react-native-safe-area-context";
 import "./global.css";
 
 import Purchases, { LOG_LEVEL } from "react-native-purchases";
 
 import { useColorScheme } from "@/hooks/useColorScheme";
 import RevenueCatService from "@/services/revenueCatService";
-import { useEffect } from "react";
+import React, { useEffect } from "react";
 import { SessionProvider, useSession } from "../ctx";
 import { SplashScreenController } from "../splash";
 
@@ -52,15 +53,19 @@ export default function RootLayout() {
 
   // Set up the auth context and render your layout inside of it.
   return (
-    <GluestackUIProvider mode="light">
-      <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
-        <SessionProvider>
-          <SplashScreenController />
-          <RootNavigator />
-        </SessionProvider>
-        <StatusBar style="dark" backgroundColor="#FEFDE8" />
-      </ThemeProvider>
-    </GluestackUIProvider>
+    <SafeAreaProvider>
+      <GluestackUIProvider mode="light">
+        <ThemeProvider
+          value={colorScheme === "dark" ? DarkTheme : DefaultTheme}
+        >
+          <SessionProvider>
+            <SplashScreenController />
+            <RootNavigator />
+          </SessionProvider>
+          <StatusBar style="dark" backgroundColor="#FEFDE8" />
+        </ThemeProvider>
+      </GluestackUIProvider>
+    </SafeAreaProvider>
   );
 }
 

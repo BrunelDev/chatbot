@@ -1,6 +1,6 @@
 import { GoBack } from "@/components/headers/goBack";
 import { SubTitle, Title } from "@/components/textComponents/title";
-import { useFormStore, HAIR_CONCERNS_CHOICES } from "@/context/useFormStore";
+import { HAIR_CONCERNS_CHOICES, useFormStore } from "@/context/useFormStore";
 import { Image } from "expo-image";
 import { router } from "expo-router";
 import { Check } from "lucide-react-native";
@@ -8,13 +8,13 @@ import React from "react";
 import {
   KeyboardAvoidingView,
   Platform,
-  SafeAreaView,
   Text,
   TouchableOpacity,
   View,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
-const problemsData : { title: string; value: HAIR_CONCERNS_CHOICES }[] = [
+const problemsData: { title: string; value: HAIR_CONCERNS_CHOICES }[] = [
   { title: "Cheveux secs", value: HAIR_CONCERNS_CHOICES.CheveuxSec },
   { title: "Cheveux gras", value: HAIR_CONCERNS_CHOICES.CheveuxGras },
   { title: "Pellicules", value: HAIR_CONCERNS_CHOICES.Pellicules },
@@ -39,8 +39,7 @@ export default function FormFour() {
       behavior={Platform.OS === "ios" ? "padding" : "height"}
       className="flex-1"
     >
-      <View className="flex-1 bg-candlelight-50 px-4">
-        <SafeAreaView />
+      <SafeAreaView className="flex-1 bg-candlelight-50 px-4" edges={["top"]}>
         <GoBack />
         <View className="flex flex-col gap-y-4 my-4">
           <Title title="Rencontrez-vous des problèmes spécifiques ?" />
@@ -81,7 +80,7 @@ export default function FormFour() {
             />
           </TouchableOpacity>
         </View>
-      </View>
+      </SafeAreaView>
     </KeyboardAvoidingView>
   );
 }

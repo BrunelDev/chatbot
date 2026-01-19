@@ -31,8 +31,7 @@ export default function FormThree() {
       behavior={Platform.OS === "ios" ? "padding" : "height"}
       className="flex-1"
     >
-      <View className="flex-1 bg-candlelight-50 px-4">
-        <SafeAreaView />
+      <SafeAreaView className="flex-1 bg-candlelight-50 px-4" edges={["top"]}>
         <GoBack />
         <View className="flex flex-col gap-y-4" style={{ marginBottom: 16 }}>
           <Title title="Quelle est la longueur de vos cheveux ?" />
@@ -95,7 +94,7 @@ export default function FormThree() {
             />
           </TouchableOpacity>
         </View>
-      </View>
+      </SafeAreaView>
     </KeyboardAvoidingView>
   );
 }

@@ -7,8 +7,8 @@ import profileService, { BioProfileResponse } from "@/services/profile";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router, useFocusEffect } from "expo-router";
 import React, { useCallback } from "react";
-import { ActivityIndicator, SafeAreaView, View } from "react-native";
-
+import { ActivityIndicator, ScrollView, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 export default function ResumeCapillaire() {
   const { user } = useUser();
   const [hairProfile, setHairProfile] =
@@ -81,26 +81,32 @@ export default function ResumeCapillaire() {
   }
 
   return (
-    <View className="bg-candlelight-50 flex-1 w-full px-4">
-      <SafeAreaView />
-      <GoBack title="Résumé capillaire" />
-      <Resume bio={hairProfile?.bio} />
-      <View className="flex flex-col gap-y-4 mt-6">
-        {items.map((item) => (
-          <ResumeItem
-            key={item.title}
-            title={item.title}
-            value={item?.value?.split(", ")}
-            href={item.href}
-          />
-        ))}
+    <SafeAreaView className="bg-candlelight-50 flex-1 w-full" edges={["top"]}>
+      <View className="px-4">
+        <GoBack title="Résumé capillaire" />
       </View>
+      <ScrollView
+        contentContainerStyle={{ paddingBottom: 150, paddingHorizontal: 16 }}
+        showsVerticalScrollIndicator={false}
+      >
+        <Resume bio={hairProfile?.bio} />
+        <View className="flex flex-col gap-y-4 mt-6">
+          {items.map((item) => (
+            <ResumeItem
+              key={item.title}
+              title={item.title}
+              value={item?.value?.split(", ")}
+              href={item.href}
+            />
+          ))}
+        </View>
+      </ScrollView>
       <View className="absolute bottom-14 left-4 right-4">
         <PrimaryButton
           title="Modifier"
           handlePress={() => router.push("/profile/stepOne")}
         />
       </View>
-    </View>
+    </SafeAreaView>
   );
 }

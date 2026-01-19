@@ -33,8 +33,7 @@ export default function FormThree() {
       behavior={Platform.OS === "ios" ? "padding" : "height"}
       className="flex-1"
     >
-      <View className="flex-1 bg-candlelight-50 px-4">
-        <SafeAreaView />
+      <SafeAreaView className="flex-1 bg-candlelight-50 px-4" edges={["top"]}>
         <GoBack />
         <View className="flex flex-col gap-y-4" style={{ marginBottom: 16 }}>
           <Title title="Avez-vous une routine capillaire actuelle ?" />
@@ -84,7 +83,7 @@ export default function FormThree() {
             loadingValue="Enregistrement..."
           />
         </View>
-      </View>
+      </SafeAreaView>
     </KeyboardAvoidingView>
   );
 }

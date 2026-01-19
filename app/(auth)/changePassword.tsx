@@ -1,14 +1,13 @@
 "use client";
 
 import accountService from "@/services/accountService";
-import { useState } from "react";
+import React, { useState } from "react";
 import {
   Alert,
   Dimensions,
   Keyboard,
   KeyboardAvoidingView,
   Platform,
-  SafeAreaView,
   StyleSheet,
   Text,
   TextInput,
@@ -16,6 +15,7 @@ import {
   TouchableWithoutFeedback,
   View,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 import { PrimaryButton } from "@/components/buttons/primaryButton";
 import { GoBack } from "@/components/headers/goBack";

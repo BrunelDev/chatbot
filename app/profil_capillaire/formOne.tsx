@@ -8,11 +8,11 @@ import React from "react";
 import {
   KeyboardAvoidingView,
   Platform,
-  SafeAreaView,
   Text,
   TouchableOpacity,
   View,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 const goalsData = [
   { title: "Favoriser la pousse", value: "Pousse" },
@@ -39,8 +39,7 @@ export default function FormOne() {
       behavior={Platform.OS === "ios" ? "padding" : "height"}
       className="flex-1"
     >
-      <View className="flex-1 bg-candlelight-50 px-4">
-        <SafeAreaView />
+      <SafeAreaView className="flex-1 bg-candlelight-50 px-4" edges={["top"]}>
         <GoBack />
         <View className="flex flex-col gap-y-4 my-4">
           <Title title="Quels sont vos objectifs capillaires ?" />
@@ -81,7 +80,7 @@ export default function FormOne() {
             />
           </TouchableOpacity>
         </View>
-      </View>
+      </SafeAreaView>
     </KeyboardAvoidingView>
   );
 }

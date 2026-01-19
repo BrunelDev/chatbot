@@ -10,11 +10,11 @@ import React, { useMemo, useState } from "react";
 import {
   KeyboardAvoidingView,
   Platform,
-  SafeAreaView,
   Text,
   TouchableOpacity,
   View,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 type Option = {
   key: string;
@@ -110,8 +110,7 @@ export default function FormOne() {
       behavior={Platform.OS === "ios" ? "padding" : "height"}
       className="flex-1"
     >
-      <View className="flex-1 bg-candlelight-50 px-4">
-        <SafeAreaView />
+      <SafeAreaView className="flex-1 bg-candlelight-50 px-4" edges={["top"]}>
         <GoBack />
         <View className="flex flex-col gap-y-4 my-4">
           <Title title="Rencontrez-vous des problèmes spécifiques ?" />
@@ -145,7 +144,7 @@ export default function FormOne() {
             loadingValue="Modification..."
           />
         </View>
-      </View>
+      </SafeAreaView>
     </KeyboardAvoidingView>
   );
 }

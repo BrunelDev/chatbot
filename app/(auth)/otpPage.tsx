@@ -8,12 +8,12 @@ import {
   Keyboard,
   KeyboardAvoidingView,
   Platform,
-  SafeAreaView,
   Text,
   TouchableWithoutFeedback,
   View,
 } from "react-native";
 import { OtpInput } from "react-native-otp-entry";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { useSession } from "../../ctx";
 export default function OtpPage() {
   const { source, email: emailFromParams } = useLocalSearchParams<{
@@ -125,9 +125,11 @@ export default function OtpPage() {
       style={{ flex: 1 }}
     >
       <TouchableWithoutFeedback onPress={() => Keyboard.dismiss()}>
-        <View className="bg-[#FCF8E8] w-full h-full justify-center px-4 gap-y-10 relative">
+        <SafeAreaView
+          className="bg-[#FCF8E8] w-full h-full justify-center px-4 gap-y-10 relative"
+          edges={["top"]}
+        >
           <GoBack />
-          <SafeAreaView />
 
           <Text className="text-[#88540B] font-medium text-4xl font-borna">
             Code de vérification
@@ -199,7 +201,7 @@ export default function OtpPage() {
               Renvoyer le code
             </Text>
           </View>
-        </View>
+        </SafeAreaView>
       </TouchableWithoutFeedback>
     </KeyboardAvoidingView>
   );

@@ -1,11 +1,15 @@
 import { Image } from "expo-image";
 import { router } from "expo-router";
 import React from "react";
-import { SafeAreaView, Text, TouchableOpacity, View } from "react-native";
+import { Text, TouchableOpacity, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 const PasswordUpdatedScreen = () => {
   return (
-    <SafeAreaView className="flex-1 bg-[#FCF8E8] justify-center items-center">
+    <SafeAreaView
+      className="flex-1 bg-[#FCF8E8] justify-center items-center"
+      edges={["top", "bottom"]}
+    >
       <View className="items-center px-8 w-full">
         <Image
           style={{ width: 80, height: 80 }}

@@ -9,12 +9,12 @@ import {
   Keyboard,
   KeyboardAvoidingView,
   Platform,
-  SafeAreaView,
   Text,
   TextInput,
   TouchableWithoutFeedback,
   View,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 export default function ForgotPassword() {
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
@@ -43,7 +43,7 @@ export default function ForgotPassword() {
       style={{ flex: 1 }}
       className="bg-[#FEFDE8]"
     >
-      <SafeAreaView className="flex-1">
+      <SafeAreaView className="flex-1" edges={["top"]}>
         <GoBack />
         <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
           <View className="flex-1 justify-center px-4 gap-y-10">

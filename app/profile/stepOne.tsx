@@ -33,7 +33,7 @@ export default function FormOne() {
 
   const goals = [
     { title: "Favoriser la pousse", value: "Pousse" },
-    { title: "Réduire la casse", value: "Force" }, 
+    { title: "Réduire la casse", value: "Force" },
     { title: "Définir mes boucles", value: "Brillance" },
     { title: "Hydrater mes cheveux", value: "Volume" },
     { title: "Gérer les frisottis", value: "Hydratation" },
@@ -53,8 +53,7 @@ export default function FormOne() {
       behavior={Platform.OS === "ios" ? "padding" : "height"}
       className="flex-1"
     >
-      <View className="flex-1 bg-candlelight-50 px-4">
-        <SafeAreaView />
+      <SafeAreaView className="flex-1 bg-candlelight-50 px-4" edges={["top"]}>
         <GoBack />
         <View className="flex flex-col gap-y-4 my-4">
           <Title title="Quels sont vos objectifs capillaires ?" />
@@ -78,14 +77,19 @@ export default function FormOne() {
             title="Enregistrer"
             showLoading={true}
             loadingValue="Enregistrement..."
-            handlePress={async() => {
-              const newProfile = await profileService.updateHairProfile({ goals: hairGoals });
-              await AsyncStorage.setItem('hairProfile', JSON.stringify(newProfile));
-              router.back()
+            handlePress={async () => {
+              const newProfile = await profileService.updateHairProfile({
+                goals: hairGoals,
+              });
+              await AsyncStorage.setItem(
+                "hairProfile",
+                JSON.stringify(newProfile)
+              );
+              router.back();
             }}
           />
         </View>
-      </View>
+      </SafeAreaView>
     </KeyboardAvoidingView>
   );
 }

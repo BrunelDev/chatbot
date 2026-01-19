@@ -35,8 +35,7 @@ export default function FormThree() {
       behavior={Platform.OS === "ios" ? "padding" : "height"}
       className="flex-1"
     >
-      <View className="flex-1 bg-candlelight-50 px-4">
-        <SafeAreaView />
+      <SafeAreaView className="flex-1 bg-candlelight-50 px-4" edges={["top"]}>
         <GoBack />
         <View className="flex flex-col gap-y-4" style={{ marginBottom: 16 }}>
           <Title title="Quelle est la longueur de vos cheveux ?" />
@@ -45,7 +44,7 @@ export default function FormThree() {
         <Picker
           itemStyle={pickerStyle.pickerItem}
           selectedValue={hairHeight}
-          onValueChange={  (value)  => {
+          onValueChange={(value) => {
             switch (value) {
               case HAIR_LENGTH_CHOICES.TresCourts:
                 setFormData({ hairHeight: HAIR_LENGTH_CHOICES.TresCourts });
@@ -70,21 +69,26 @@ export default function FormThree() {
           {hairHeightData.map((item) => (
             <Picker.Item label={item.label} value={item.value} />
           ))}
-        
         </Picker>
-     
 
         {/* Sticky footer button */}
         <View className="absolute bottom-14 left-4 right-4">
-          <PrimaryButton title="Enregister" loadingValue="Enregistrement..." showLoading={true} handlePress={async () => {
-            if (hairHeight) {
-              console.log("hairHeight", hairHeight)
-              await profileService.updateHairProfile({ hair_length: hairHeight })
-            }
-            router.back()
-          }} />
+          <PrimaryButton
+            title="Enregister"
+            loadingValue="Enregistrement..."
+            showLoading={true}
+            handlePress={async () => {
+              if (hairHeight) {
+                console.log("hairHeight", hairHeight);
+                await profileService.updateHairProfile({
+                  hair_height: hairHeight,
+                });
+              }
+              router.back();
+            }}
+          />
         </View>
-      </View>
+      </SafeAreaView>
     </KeyboardAvoidingView>
   );
 }

@@ -97,8 +97,10 @@ export default function NotificationsPage() {
     }
   }, []);
   return (
-    <View className="bg-candlelight-50 h-full w-full px-4">
-      <SafeAreaView />
+    <SafeAreaView
+      className="bg-candlelight-50 h-full w-full px-4"
+      edges={["top"]}
+    >
       <GoBack
         title={`Notifications${totalCount > 0 ? ` (${totalCount})` : ""}`}
       />
@@ -141,7 +143,7 @@ export default function NotificationsPage() {
       ) : (
         <EmptyState />
       )}
-    </View>
+    </SafeAreaView>
   );
 }
 
