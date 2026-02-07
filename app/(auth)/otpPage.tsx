@@ -1,5 +1,6 @@
 import { GoBack } from "@/components/headers/goBack";
 import accountService, { AuthResponse } from "@/services/accountService";
+import RevenueCatService from "@/services/revenueCatService";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router, useLocalSearchParams } from "expo-router";
 import { useEffect, useState } from "react";
@@ -98,6 +99,13 @@ export default function OtpPage() {
         // Stocker aussi dans AsyncStorage pour compatibilité
         await AsyncStorage.setItem("userInfo", JSON.stringify(tempUser));
 
+        // Identifier l'utilisateur dans RevenueCat
+        try {
+          await RevenueCatService.loginUser(tempUser.user.id.toString());
+        } catch (e) {
+          console.error("Failed to identify user in RevenueCat:", e);
+        }
+
         // Rediriger vers l'app principal maintenant que l'utilisateur est connecté
         router.replace("/(tabs)/home");
       } else {
@@ -135,13 +143,14 @@ export default function OtpPage() {
             Code de vérification
           </Text>
           <Text>
-            {source === "password_reset"
-              ? `Nous avons envoyé un code à ${
-                  effectiveEmail || "votre adresse e-mail"
-                }. Veuillez le saisir ci-dessous pour continuer le processus de réinitialisation de mot de passe.`
-              : `Nous avons envoyé un code à ${
-                  effectiveEmail || "votre adresse e-mail"
-                }. Veuillez le saisir ci-dessous pour vérifier votre compte.`}
+            {source === "password_reset" ?
+              `Nous avons envoyé un code à ${
+                effectiveEmail || "votre adresse e-mail"
+              }. Veuillez le saisir ci-dessous pour continuer le processus de réinitialisation de mot de passe.`
+            : `Nous avons envoyé un code à ${
+                effectiveEmail || "votre adresse e-mail"
+              }. Veuillez le saisir ci-dessous pour vérifier votre compte.`
+            }
           </Text>
           <OtpInput
             numberOfDigits={4}
@@ -178,7 +187,7 @@ export default function OtpPage() {
               onPress={async () => {
                 if (!effectiveEmail) {
                   Alert.alert(
-                    "Adresse e-mail non disponible pour renvoyer le code."
+                    "Adresse e-mail non disponible pour renvoyer le code.",
                   );
                   return;
                 }
@@ -190,9 +199,9 @@ export default function OtpPage() {
                   Alert.alert("Code de vérification renvoyé avec succès.");
                 } catch (error: unknown) {
                   const errorMessage =
-                    error instanceof Error
-                      ? error.message
-                      : "Échec de renvoi du code de vérification.";
+                    error instanceof Error ?
+                      error.message
+                    : "Échec de renvoi du code de vérification.";
                   Alert.alert(errorMessage);
                   console.error("Failed to resend verification code:", error);
                 }

@@ -6,10 +6,12 @@ import {
   createConversationSession,
   getConversationHistory,
   getFullConversation,
+  QuotaExceededError,
   Recommandation,
   StartConversationPayload,
   startOrContinueConversation,
 } from "@/services/chatBotService";
+import RevenueCatService from "@/services/revenueCatService";
 import { uploadToSupabase } from "@/services/storage/uploadToSupabase";
 import { Chat, defaultTheme, MessageType } from "@flyerhq/react-native-chat-ui";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -33,7 +35,6 @@ import {
   View,
 } from "react-native";
 import Markdown from "react-native-markdown-display";
-import Purchases from "react-native-purchases";
 
 // Extension des types de messages pour inclure les messages avec image et texte
 type ExtendedMessageType =
@@ -70,6 +71,7 @@ const Chatbot = () => {
   const [currentChatId, setCurrentChatId] = useState<string | undefined>();
   const [isTyping, setIsTyping] = useState(false);
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);
+  const [isPremium, setIsPremium] = useState(false);
 
   // ✅ Component d'animation interne pour les points
   const TypingDots = () => {
@@ -93,7 +95,7 @@ const Chatbot = () => {
               useNativeDriver: true,
             }),
             Animated.delay(200),
-          ])
+          ]),
         );
       };
 
@@ -149,7 +151,7 @@ const Chatbot = () => {
 
   // Fonction pour convertir ExtendedMessageType en MessageType.Any pour le composant Chat
   const convertToChatMessages = (
-    messages: ExtendedMessageType[]
+    messages: ExtendedMessageType[],
   ): MessageType.Any[] => {
     return messages.map((message) => {
       if (message.type === "image_with_text") {
@@ -166,8 +168,7 @@ const Chatbot = () => {
   };
 
   const [messages, setMessages] = useState<ExtendedMessageType[]>([]);
-  const [showSubscriptionModal, setShowSubscriptionModal] = useState(true);
-  const [isPremium, setIsPremium] = useState(false);
+  const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
   const [selectedImage, setSelectedImage] = useState<{
     uri: string;
     name: string;
@@ -195,11 +196,12 @@ const Chatbot = () => {
 
   const checkPremiumStatus = async () => {
     try {
-      const customerInfo = await Purchases.getCustomerInfo();
-      const isPremiumUser =
-        typeof customerInfo.entitlements.active["premium"] !== "undefined";
+      const isPremiumUser = await RevenueCatService.isPremiumUser();
       setIsPremium(isPremiumUser);
       console.log("Premium status:", isPremiumUser);
+      if (isPremiumUser) {
+        setShowSubscriptionModal(false);
+      }
     } catch (error) {
       console.error("Error checking premium status:", error);
     }
@@ -232,9 +234,9 @@ const Chatbot = () => {
     } catch (error) {
       console.error("Error opening URL:", error);
       const errorMessage =
-        error instanceof Error
-          ? error.message
-          : "Une erreur est survenue lors de l'ouverture du lien";
+        error instanceof Error ?
+          error.message
+        : "Une erreur est survenue lors de l'ouverture du lien";
       Alert.alert("Erreur", errorMessage);
     }
   };
@@ -260,7 +262,7 @@ const Chatbot = () => {
 
     return (
       <>
-        {isImageWithTextMessage ? (
+        {isImageWithTextMessage ?
           <>
             <View
               style={{
@@ -321,7 +323,7 @@ const Chatbot = () => {
               </View>
             </View>
           </>
-        ) : isImageMessage ? (
+        : isImageMessage ?
           <View
             style={{
               backgroundColor: isUserMessage ? "#FFFDC2" : "transparent",
@@ -360,7 +362,7 @@ const Chatbot = () => {
               </View>
             </View>
           </View>
-        ) : isTextMessage ? (
+        : isTextMessage ?
           <>
             <View
               style={{
@@ -406,73 +408,76 @@ const Chatbot = () => {
                   recommendations = message.ai_analysis.recommendations;
                 }
 
-                return recommendations && recommendations.length > 0 ? (
-                  <View className="mt-2 gap-2">
-                    {recommendations.map((recommendation) => (
-                      <TouchableOpacity
-                        key={recommendation.id}
-                        onPress={() =>
-                          handleRecommendationPress(recommendation.url)
-                        }
-                        activeOpacity={0.7}
-                        className="bg-white rounded-lg p-3 border border-envy-200"
-                        style={{
-                          shadowColor: "#000",
-                          shadowOffset: { width: 0, height: 1 },
-                          shadowOpacity: 0.1,
-                          shadowRadius: 2,
-                          elevation: 2,
-                        }}
-                      >
-                        <View className="flex-row items-center gap-3">
-                          {recommendation.image_url && (
-                            <Image
-                              source={{ uri: recommendation.image_url }}
-                              style={{ width: 50, height: 50, borderRadius: 8 }}
-                              contentFit="cover"
-                            />
-                          )}
-                          <View className="flex-1">
-                            <Text
-                              className="font-semibold text-sm text-envy-800"
-                              numberOfLines={1}
-                            >
-                              {recommendation.name}
-                            </Text>
-                            <Text
-                              className="text-xs text-envy-600 mt-1"
-                              numberOfLines={1}
-                            >
-                              {recommendation.brand}
-                            </Text>
-                            <View className="flex-row items-center gap-2 mt-1">
-                              <Text className="text-xs font-semibold text-envy-700">
-                                {recommendation.price}€
+                return recommendations && recommendations.length > 0 ?
+                    <View className="mt-2 gap-2">
+                      {recommendations.map((recommendation) => (
+                        <TouchableOpacity
+                          key={recommendation.id}
+                          onPress={() =>
+                            handleRecommendationPress(recommendation.url)
+                          }
+                          activeOpacity={0.7}
+                          className="bg-white rounded-lg p-3 border border-envy-200"
+                          style={{
+                            shadowColor: "#000",
+                            shadowOffset: { width: 0, height: 1 },
+                            shadowOpacity: 0.1,
+                            shadowRadius: 2,
+                            elevation: 2,
+                          }}
+                        >
+                          <View className="flex-row items-center gap-3">
+                            {recommendation.image_url && (
+                              <Image
+                                source={{ uri: recommendation.image_url }}
+                                style={{
+                                  width: 50,
+                                  height: 50,
+                                  borderRadius: 8,
+                                }}
+                                contentFit="cover"
+                              />
+                            )}
+                            <View className="flex-1">
+                              <Text
+                                className="font-semibold text-sm text-envy-800"
+                                numberOfLines={1}
+                              >
+                                {recommendation.name}
                               </Text>
-                              {recommendation.rating > 0 && (
-                                <Text className="text-xs text-envy-600">
-                                  ⭐ {recommendation.rating}
+                              <Text
+                                className="text-xs text-envy-600 mt-1"
+                                numberOfLines={1}
+                              >
+                                {recommendation.brand}
+                              </Text>
+                              <View className="flex-row items-center gap-2 mt-1">
+                                <Text className="text-xs font-semibold text-envy-700">
+                                  {recommendation.price}€
+                                </Text>
+                                {recommendation.rating > 0 && (
+                                  <Text className="text-xs text-envy-600">
+                                    ⭐ {recommendation.rating}
+                                  </Text>
+                                )}
+                              </View>
+                              {recommendation.reason && (
+                                <Text
+                                  className="text-xs text-envy-600 mt-1"
+                                  numberOfLines={2}
+                                >
+                                  {recommendation.reason}
                                 </Text>
                               )}
                             </View>
-                            {recommendation.reason && (
-                              <Text
-                                className="text-xs text-envy-600 mt-1"
-                                numberOfLines={2}
-                              >
-                                {recommendation.reason}
-                              </Text>
-                            )}
                           </View>
-                        </View>
-                      </TouchableOpacity>
-                    ))}
-                  </View>
-                ) : null;
+                        </TouchableOpacity>
+                      ))}
+                    </View>
+                  : null;
               })()}
           </>
-        ) : (
-          <View
+        : <View
             style={{
               backgroundColor: isUserMessage ? "#FFFDC2" : "transparent",
               borderColor: "transparent",
@@ -487,7 +492,7 @@ const Chatbot = () => {
           >
             <View className="px-2 py-3">{child}</View>
           </View>
-        )}
+        }
       </>
     );
   };
@@ -497,10 +502,12 @@ const Chatbot = () => {
       const loadChatId = async () => {
         setIsLoadingMessages(true);
         console.log("start");
+        const isPremiumUser = await RevenueCatService.isPremiumUser();
+        setIsPremium(isPremiumUser);
 
         const fetchAndSetMessages = async (id: string) => {
           const conversation = await getFullConversation(id);
-          console.log("messages :", JSON.stringify(conversation, null, 2));
+          // console.log("messages :", JSON.stringify(conversation, null, 2));
           setMessages(
             conversation.messages.reverse().map((message) => ({
               id: message.id.toString(),
@@ -510,12 +517,13 @@ const Chatbot = () => {
               imageFile: message.image_file,
               createdAt: Date.now(),
               recommendations: message.ai_analysis?.recommendations,
-              ai_analysis: message.ai_analysis
-                ? {
+              ai_analysis:
+                message.ai_analysis ?
+                  {
                     recommendations: message.ai_analysis.recommendations,
                   }
                 : undefined,
-            }))
+            })),
           );
         };
 
@@ -534,7 +542,7 @@ const Chatbot = () => {
                 conversationError?.response?.status === 404
               ) {
                 console.log(
-                  "Session not found, checking API for latest session..."
+                  "Session not found, checking API for latest session...",
                 );
                 // Session not found in storage, check API for latest session
                 try {
@@ -544,7 +552,7 @@ const Chatbot = () => {
                     const sortedSessions = [...history.results].sort(
                       (a, b) =>
                         new Date(b.updated_at).getTime() -
-                        new Date(a.updated_at).getTime()
+                        new Date(a.updated_at).getTime(),
                     );
                     const latestSession = sortedSessions[0];
                     chatId = latestSession.session_id;
@@ -554,7 +562,7 @@ const Chatbot = () => {
                   } else {
                     // No sessions in API, create new one
                     console.log(
-                      "No sessions found in API, creating a new one..."
+                      "No sessions found in API, creating a new one...",
                     );
                     const newSession = await createConversationSession({
                       title: "Chat",
@@ -567,7 +575,7 @@ const Chatbot = () => {
                 } catch (historyError) {
                   console.error(
                     "Error fetching conversation history:",
-                    historyError
+                    historyError,
                   );
                   // If history fetch fails, create new session
                   const newSession = await createConversationSession({
@@ -585,7 +593,7 @@ const Chatbot = () => {
           } else {
             // No chatId in storage, check API for latest session
             console.log(
-              "No chatId in storage, checking API for latest session..."
+              "No chatId in storage, checking API for latest session...",
             );
             try {
               const history = await getConversationHistory();
@@ -594,7 +602,7 @@ const Chatbot = () => {
                 const sortedSessions = [...history.results].sort(
                   (a, b) =>
                     new Date(b.updated_at).getTime() -
-                    new Date(a.updated_at).getTime()
+                    new Date(a.updated_at).getTime(),
                 );
                 const latestSession = sortedSessions[0];
                 chatId = latestSession.session_id;
@@ -613,7 +621,7 @@ const Chatbot = () => {
             } catch (historyError) {
               console.error(
                 "Error fetching conversation history:",
-                historyError
+                historyError,
               );
               // If history fetch fails, create new session
               const newChatId = await createConversationSession({
@@ -630,7 +638,7 @@ const Chatbot = () => {
         }
       };
       loadChatId();
-    }, [])
+    }, []),
   );
 
   const handleSendPress = async (message: MessageType.PartialText) => {
@@ -685,11 +693,11 @@ const Chatbot = () => {
       const response = await sendMessageToRag(
         message.text,
         currentChatId,
-        uploadedImageUrl
+        uploadedImageUrl,
       );
 
       setMessages((currentMessages) =>
-        currentMessages.filter((msg) => msg.id !== TYPING_MESSAGE_ID)
+        currentMessages.filter((msg) => msg.id !== TYPING_MESSAGE_ID),
       );
       setIsTyping(false);
 
@@ -702,8 +710,9 @@ const Chatbot = () => {
         text: response?.ai_response.content!,
         type: "text",
         recommendations: response?.ai_analysis?.recommendations,
-        ai_analysis: response?.ai_analysis
-          ? {
+        ai_analysis:
+          response?.ai_analysis ?
+            {
               recommendations: response.ai_analysis.recommendations,
             }
           : undefined,
@@ -714,11 +723,11 @@ const Chatbot = () => {
       console.error("Error sending message:", error);
 
       setMessages((currentMessages) =>
-        currentMessages.filter((msg) => msg.id !== TYPING_MESSAGE_ID)
+        currentMessages.filter((msg) => msg.id !== TYPING_MESSAGE_ID),
       );
       setIsTyping(false);
 
-      const { QuotaExceededError } = require("@/services/chatBotService");
+      // const { QuotaExceededError } = require("@/services/chatBotService");
       if (error instanceof QuotaExceededError) {
         const quotaData = error.quotaData;
 
@@ -739,9 +748,9 @@ const Chatbot = () => {
         }
       } else {
         const errorMessageText =
-          error instanceof Error
-            ? error.message
-            : "Désolé, une erreur s'est produite. Veuillez réessayer.";
+          error instanceof Error ?
+            error.message
+          : "Désolé, une erreur s'est produite. Veuillez réessayer.";
 
         const errorMessage: MessageType.Text = {
           author: assistantUser,
@@ -779,71 +788,77 @@ const Chatbot = () => {
     setIsSidebarOpen(false);
   };
 
+  const [isPurchasing, setIsPurchasing] = useState(false);
+
   const handleUpgradeToPremium = async () => {
+    if (isPurchasing) return;
+    setIsPurchasing(true);
+
     try {
       console.log("🔍 Fetching offerings...");
-      const offerings = await Purchases.getOfferings();
+      const currentOffering = await RevenueCatService.getOfferings();
 
-      console.log("📦 Available offerings:", offerings);
-
-      if (!offerings.current) {
-        console.error("❌ No current offering found");
+      if (!currentOffering?.availablePackages?.length) {
         Alert.alert(
           "Erreur",
-          "Aucune offre disponible. Vérifiez votre configuration RevenueCat."
+          "Aucune offre disponible pour le moment. Réessayez plus tard.",
         );
         return;
       }
 
-      const availablePackages = offerings.current.availablePackages;
+      // Chercher le package mensuel spécifique ou prendre le premier
+      const packageToPurchase =
+        currentOffering.availablePackages.find(
+          (pkg) => pkg.identifier === "$rc_monthly",
+        ) || currentOffering.availablePackages[0];
 
-      if (availablePackages.length === 0) {
-        console.error("❌ No packages found in current offering");
-        Alert.alert(
-          "Erreur",
-          "Aucun abonnement disponible. Contactez le support."
-        );
+      console.log("💳 Attempting purchase:", packageToPurchase.identifier);
+      const purchaseResult =
+        await RevenueCatService.purchasePackage(packageToPurchase);
+
+      if (!purchaseResult.success) {
+        // Le service gère déjà les messages d'erreur
         return;
       }
 
-      const packageToPurchase = availablePackages[0];
+      console.log("✅ Purchase successful, verifying premium status...");
 
-      if (!packageToPurchase) {
-        console.error("❌ No suitable package found");
-        Alert.alert("Erreur", "Aucun abonnement mensuel trouvé.");
-        return;
-      }
+      // Attendre la synchronisation
+      await new Promise((resolve) => setTimeout(resolve, 1500));
 
-      console.log("💳 Attempting purchase of:", packageToPurchase.identifier);
-      const { customerInfo } = await Purchases.purchasePackage(
-        packageToPurchase
-      );
+      const nowPremium = await RevenueCatService.isPremiumUser();
 
-      console.log("✅ Purchase successful");
+      setIsPremium(true); // on active tout de suite
+      setShowSubscriptionModal(false);
 
-      if (typeof customerInfo.entitlements.active["premium"] !== "undefined") {
-        setIsPremium(true);
-        setShowSubscriptionModal(false);
+      if (nowPremium) {
         Alert.alert("Succès", "Vous êtes maintenant premium ! 🎉");
       } else {
-        console.warn(
-          "⚠️ Purchase completed but 'premium' entitlement not found"
-        );
+        // Retry silencieux en arrière-plan
+        setTimeout(async () => {
+          const retryCheck = await RevenueCatService.isPremiumUser();
+          if (!retryCheck) {
+            console.warn("⚠️ Premium status not confirmed after retry");
+          }
+        }, 3000);
+
         Alert.alert(
-          "Attention",
-          "Achat effectué mais l'accès premium n'est pas encore actif. Veuillez patienter quelques instants."
+          "Presque terminé",
+          "Votre abonnement est activé ! Si certaines fonctionnalités ne sont pas accessibles, redémarrez l'app.",
         );
       }
     } catch (e: any) {
       console.error("❌ Purchase error:", e);
-      if (!e.userCancelled) {
-        Alert.alert(
-          "Erreur",
-          e.message || "Une erreur est survenue lors de l'achat."
-        );
-      } else {
-        console.log("ℹ️ User cancelled purchase");
-      }
+
+      // Messages d'erreur plus spécifiques
+      const errorMessage =
+        e?.code === "PURCHASE_CANCELLED" ?
+          "Achat annulé"
+        : e?.message || "Une erreur est survenue lors de l'achat.";
+
+      Alert.alert("Erreur", errorMessage);
+    } finally {
+      setIsPurchasing(false);
     }
   };
 
@@ -852,15 +867,17 @@ const Chatbot = () => {
   return (
     <View className="bg-candlelight-50 h-full w-full">
       <View className="mt-[50px] px-4">
-        <ChatHeadBar onMenuPress={() => setIsSidebarOpen(true)} />
+        <ChatHeadBar
+          onMenuPress={() => setIsSidebarOpen(true)}
+          isPremium={isPremium}
+        />
       </View>
       <View className="flex-1">
-        {isLoadingMessages ? (
+        {isLoadingMessages ?
           <View className="flex-1 justify-center items-center">
             <ActivityIndicator size="large" color="#587950" />
           </View>
-        ) : (
-          <>
+        : <>
             <Chat
               sendButtonVisibilityMode="always"
               emptyState={() => (
@@ -974,7 +991,7 @@ const Chatbot = () => {
               </View>
             )}
           </>
-        )}
+        }
       </View>
 
       <PremiumSubscriptionModal
@@ -991,7 +1008,7 @@ export default Chatbot;
 const sendMessageToRag = async (
   message: string,
   session_id?: string,
-  imageUrl?: string
+  imageUrl?: string,
 ) => {
   try {
     const payload: StartConversationPayload = {

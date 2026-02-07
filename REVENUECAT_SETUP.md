@@ -57,18 +57,12 @@ Quand RevenueCat n'est pas disponible, le service fonctionne en mode simulation 
 - **Vérification premium** : Retourne toujours `false`
 - **Restauration** : Simule une restauration réussie
 
-### 4. Configuration app.json
+### 4. Configuration Expo (important)
 
-Le plugin RevenueCat a été ajouté à la configuration :
+`react-native-purchases` est un **module natif**. Il **ne fournit pas** de config plugin Expo valide, donc il ne faut **pas** l’ajouter dans `"plugins"` de `app.json` (sinon tu obtiens :
+`PluginError: Package "react-native-purchases" does not contain a valid config plugin.`).
 
-```json
-{
-  "plugins": [
-    // ... autres plugins
-    "react-native-purchases"
-  ]
-}
-```
+Pour tester RevenueCat, utilise un **Expo Development Build** / **EAS Build** (pas Expo Go).
 
 ## Environnements supportés
 
@@ -131,8 +125,8 @@ private static readonly API_KEYS = {
 Si vous rencontrez encore des erreurs :
 
 1. Vérifiez que `expo-constants` est installé
-2. Assurez-vous que le plugin est dans `app.json`
-3. Redémarrez le serveur de développement après modification de `app.json`
-4. Pour les tests complets, utilisez un development build plutôt qu'Expo Go
+2. Assurez-vous d’utiliser un **development build** (dev client) plutôt qu’Expo Go
+3. Redémarrez le serveur de développement après modification de `app.json` / de la config
+4. Si vous voyez l’erreur de plugin, retirez `"react-native-purchases"` de `app.json`
 
 Cette solution permet à votre application de fonctionner sans erreur dans tous les environnements, avec une dégradation gracieuse quand RevenueCat n'est pas disponible.

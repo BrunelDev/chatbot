@@ -1,5 +1,5 @@
 import { Image } from "expo-image";
-import { router, useFocusEffect } from "expo-router";
+import { useFocusEffect } from "expo-router";
 import { X } from "lucide-react-native";
 import React, { useCallback, useState } from "react";
 import { Modal, Text, TouchableOpacity, View } from "react-native";
@@ -35,7 +35,7 @@ export default function PremiumSubscriptionModal({
   useFocusEffect(
     useCallback(() => {
       setIsModalVisible(visible);
-    }, [visible])
+    }, [visible]),
   );
 
   return (
@@ -132,7 +132,8 @@ export default function PremiumSubscriptionModal({
                 {/* Disclaimer */}
                 <TouchableOpacity
                   onPress={() => {
-                    router.back();
+                    onClose();
+                    setIsModalVisible(false);
                   }}
                 >
                   <Text className="text-center text-black text-xs">

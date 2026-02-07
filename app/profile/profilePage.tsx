@@ -3,6 +3,7 @@ import { GoBack } from "@/components/headers/goBack";
 import { useImagePicker } from "@/hooks/useImagePicker";
 import { useUser } from "@/hooks/useUser";
 import accountService from "@/services/accountService";
+import RevenueCatService from "@/services/revenueCatService";
 import { deleteAllUserData, deleteSessionData } from "@/utils/dataCleanup";
 import BottomSheet, {
   BottomSheetBackdrop,
@@ -11,6 +12,7 @@ import BottomSheet, {
 import { Image } from "expo-image";
 import { router } from "expo-router";
 import * as WebBrowser from "expo-web-browser";
+import { Crown } from "lucide-react-native";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   Alert,
@@ -70,8 +72,87 @@ export default function Profile() {
       setProfileImageUri(imageUri);
     };
 
+    const checkPremiumStatus = async () => {
+      const isPremiumUser = await RevenueCatService.isPremiumUser();
+      setIsPremium(isPremiumUser);
+    };
+
     loadProfileImage();
+    checkPremiumStatus();
   }, []);
+
+  const [isPurchasing, setIsPurchasing] = useState(false);
+  const [isPremium, setIsPremium] = useState(false);
+
+  const handleUpgradeToPremium = async () => {
+    if (isPurchasing) return;
+    setIsPurchasing(true);
+
+    try {
+      console.log("🔍 Fetching offerings...");
+      const currentOffering = await RevenueCatService.getOfferings();
+
+      if (!currentOffering?.availablePackages?.length) {
+        Alert.alert(
+          "Erreur",
+          "Aucune offre disponible pour le moment. Réessayez plus tard.",
+        );
+        return;
+      }
+
+      // Chercher le package mensuel spécifique ou prendre le premier
+      const packageToPurchase =
+        currentOffering.availablePackages.find(
+          (pkg: any) => pkg.identifier === "$rc_monthly",
+        ) || currentOffering.availablePackages[0];
+
+      console.log("💳 Attempting purchase:", packageToPurchase.identifier);
+      const purchaseResult =
+        await RevenueCatService.purchasePackage(packageToPurchase);
+
+      if (!purchaseResult.success) {
+        // Le service gère déjà les messages d'erreur
+        return;
+      }
+
+      console.log("✅ Purchase successful, verifying premium status...");
+
+      // Attendre la synchronisation
+      await new Promise((resolve) => setTimeout(resolve, 1500));
+
+      const nowPremium = await RevenueCatService.isPremiumUser();
+
+      if (nowPremium) {
+        setIsPremium(true);
+        Alert.alert("Succès", "Vous êtes maintenant premium ! 🎉");
+      } else {
+        // Retry silencieux en arrière-plan
+        setTimeout(async () => {
+          const retryCheck = await RevenueCatService.isPremiumUser();
+          if (!retryCheck) {
+            console.warn("⚠️ Premium status not confirmed after retry");
+          }
+        }, 3000);
+
+        Alert.alert(
+          "Presque terminé",
+          "Votre abonnement est activé ! Si certaines fonctionnalités ne sont pas accessibles, redémarrez l'app.",
+        );
+      }
+    } catch (e: any) {
+      console.error("❌ Purchase error:", e);
+
+      // Messages d'erreur plus spécifiques
+      const errorMessage =
+        e?.code === "PURCHASE_CANCELLED" ?
+          "Achat annulé"
+        : e?.message || "Une erreur est survenue lors de l'achat.";
+
+      Alert.alert("Erreur", errorMessage);
+    } finally {
+      setIsPurchasing(false);
+    }
+  };
 
   // Fonction pour gérer la sélection d'image
   const handleImageSelection = async () => {
@@ -82,15 +163,15 @@ export default function Profile() {
         Alert.alert(
           "Succès",
           "Votre photo de profil a été mise à jour avec succès !",
-          [{ text: "OK" }]
+          [{ text: "OK" }],
         );
       }
     } catch (error) {
       console.error("Erreur lors de la sélection de l'image:", error);
       const errorMessage =
-        error instanceof Error
-          ? error.message
-          : "Une erreur est survenue lors de la mise à jour de votre photo de profil.";
+        error instanceof Error ?
+          error.message
+        : "Une erreur est survenue lors de la mise à jour de votre photo de profil.";
       Alert.alert("Erreur", errorMessage, [{ text: "OK" }]);
     }
   };
@@ -107,10 +188,11 @@ export default function Profile() {
           text: "Se déconnecter",
           onPress: async () => {
             await deleteSessionData();
+            await RevenueCatService.logoutUser();
             signOut(); // Utilise le contexte d'authentification
           },
         },
-      ]
+      ],
     );
   };
 
@@ -126,6 +208,7 @@ export default function Profile() {
         {
           text: "OK",
           onPress: async () => {
+            await RevenueCatService.logoutUser();
             signOut(); // Utilise le contexte d'authentification
           },
         },
@@ -133,9 +216,9 @@ export default function Profile() {
     } catch (error: any) {
       Alert.alert(
         "Erreur",
-        error instanceof Error
-          ? error.message
-          : "Impossible de supprimer le compte."
+        error instanceof Error ?
+          error.message
+        : "Impossible de supprimer le compte.",
       );
     }
   };
@@ -154,7 +237,7 @@ export default function Profile() {
         opacity={0.5}
       />
     ),
-    []
+    [],
   );
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
@@ -174,9 +257,9 @@ export default function Profile() {
               <Image
                 key={profileImageUri || "default"} // Force la mise à jour de l'image
                 source={
-                  profileImageUri
-                    ? { uri: profileImageUri }
-                    : require("../../assets/images/userProfile-img.png")
+                  profileImageUri ?
+                    { uri: profileImageUri }
+                  : require("../../assets/images/userProfile-img.png")
                 }
                 style={{ width: 140, height: 140 }}
                 contentFit="cover"
@@ -194,11 +277,21 @@ export default function Profile() {
             </TouchableOpacity>
           </View>
 
-          <Text className="text-envy-700 text-xl font-medium font-borna">
-            {user?.user.username}
-          </Text>
+          <View className="flex flex-row items-center gap-x-2 my-2">
+            <Text className="text-envy-700 text-xl font-medium font-borna">
+              {user?.user.username}
+            </Text>
+            {isPremium && (
+              <View className="flex flex-row items-center bg-candlelight-50 px-2 py-1 rounded-full gap-x-1 border border-secondary-200">
+                <Crown size={12} color="#A46C04" fill="#A46C04" />
+                <Text className="text-envy-700 text-[10px] font-bold tracking-widest">
+                  PREMIUM
+                </Text>
+              </View>
+            )}
+          </View>
 
-          <Text className="text-[#4D5962] text-sm ">{user?.user.email}</Text>
+          <Text className="text-[#4D5962] text-sm">{user?.user.email}</Text>
         </View>
       </View>
       <ScrollView
@@ -226,12 +319,10 @@ export default function Profile() {
           </TouchableOpacity>
 
           {/* Bouton Premium */}
-          <TouchableOpacity
+          {!isPremium &&<TouchableOpacity
             className="bg-gradient-to-r from-envy-200 to-envy-300 h-[70px] flex flex-row items-center justify-between px-4 rounded-xl border border-envy-400"
-            onPress={() => {
-              // TODO: Implémenter la navigation vers la page premium
-              // Alert.alert("Premium", "Fonctionnalité premium à venir !");
-            }}
+            onPress={handleUpgradeToPremium}
+            disabled={isPurchasing}
             activeOpacity={0.7}
             style={{
               backgroundColor: "#C9D6C4",
@@ -248,7 +339,7 @@ export default function Profile() {
                   Passer à Premium
                 </Text>
                 <Text className="text-envy-700 text-xs">
-                  Dites non au publicités
+                  Profitez de votre coach capillaire sans limite !
                 </Text>
               </View>
             </View>
@@ -258,7 +349,7 @@ export default function Profile() {
                 style={{ width: 20, height: 20, tintColor: "#587950" }}
               />
             </View>
-          </TouchableOpacity>
+          </TouchableOpacity>}
 
           <View className="flex flex-col gap-y-6">
             {options.map((option, index) => (

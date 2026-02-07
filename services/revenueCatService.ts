@@ -1,28 +1,12 @@
-import Constants from "expo-constants";
 import { Platform } from "react-native";
-
-// Import conditionnel de RevenueCat pour éviter les erreurs en développement
-let Purchases: any = null;
-let CustomerInfo: any = null;
-let PURCHASES_ERROR_CODE: any = null;
-let PurchasesOffering: any = null;
-let PurchasesPackage: any = null;
-let PurchasesError: any = null;
-
-try {
-  const RevenueCatModule = require("react-native-purchases");
-  Purchases = RevenueCatModule.default || RevenueCatModule.Purchases;
-  CustomerInfo = RevenueCatModule.CustomerInfo;
-  PURCHASES_ERROR_CODE = RevenueCatModule.PURCHASES_ERROR_CODE;
-  PurchasesOffering = RevenueCatModule.PurchasesOffering;
-  PurchasesPackage = RevenueCatModule.PurchasesPackage;
-  PurchasesError = RevenueCatModule.PurchasesError;
-} catch (error) {
-  console.warn(
-    "RevenueCat n'est pas disponible dans cet environnement:",
-    error
-  );
-}
+import Purchases, {
+  CustomerInfo,
+  LOG_LEVEL,
+  PURCHASES_ERROR_CODE,
+  PurchasesError,
+  PurchasesOffering,
+  PurchasesPackage,
+} from "react-native-purchases";
 
 export interface SubscriptionInfo {
   isActive: boolean;
@@ -40,17 +24,20 @@ class RevenueCatService {
 
   // Clés API RevenueCat (remplacez par vos vraies clés)
   private static readonly API_KEYS = {
-    ANDROID: "rcat_android_key_here", // Remplacez par votre clé Android
-    IOS: "appl_EQydqfvsncAoKXNhSbzwIUUPaRb",
+    ANDROID: "appl_JLyEKfDVGgKXZihkSOPEBsaRbSJ",
+    IOS: "appl_JLyEKfDVGgKXZihkSOPEBsaRbSJ",
   };
 
   // Identifiants des produits d'abonnement
   public static readonly PRODUCT_IDS = {
-    MONTHLY: "premium_monthly",
-    YEARLY: "premium_yearly",
+    MONTHLY: "monthly_bep",
   };
 
-  public static readonly ENTITLEMENT_ID = "premium_features";
+  /**
+   * Identifiant d'entitlement RevenueCat.
+   * Doit correspondre EXACTEMENT à l'entitlement configuré dans le dashboard.
+   */
+  public static readonly ENTITLEMENT_ID = "bep-premium";
 
   public static getInstance(): RevenueCatService {
     if (!RevenueCatService.instance) {
@@ -58,27 +45,6 @@ class RevenueCatService {
     }
     return RevenueCatService.instance;
   }
-
-  /**
-   * Vérifie si RevenueCat est disponible dans l'environnement actuel
-   */
-  private checkRevenueCatAvailability(): boolean {
-    if (!Purchases) {
-      console.warn("RevenueCat n'est pas disponible dans cet environnement");
-      return false;
-    }
-
-    // Vérifier si on est dans Expo Go
-    if (Constants.appOwnership === "expo") {
-      console.warn(
-        "RevenueCat n'est pas supporté dans Expo Go. Utilisez un développement build ou EAS Build."
-      );
-      return false;
-    }
-
-    return true;
-  }
-
   /**
    * Initialise RevenueCat avec les clés API
    */
@@ -88,22 +54,16 @@ class RevenueCatService {
       return;
     }
 
-    // Vérifier la disponibilité de RevenueCat
-    this.isRevenueCatAvailable = this.checkRevenueCatAvailability();
-
-    if (!this.isRevenueCatAvailable) {
-      console.warn("RevenueCat non disponible, mode simulation activé");
-      this.isInitialized = true;
-      return;
-    }
-
     try {
       const apiKey =
-        Platform.OS === "android"
-          ? RevenueCatService.API_KEYS.ANDROID
-          : RevenueCatService.API_KEYS.IOS;
+        Platform.OS === "android" ?
+          RevenueCatService.API_KEYS.ANDROID
+        : RevenueCatService.API_KEYS.IOS;
 
-      await Purchases.configure({ apiKey });
+      // Activer des logs verbeux (utile en dev)
+      Purchases.setLogLevel(LOG_LEVEL.VERBOSE);
+
+      Purchases.configure({ apiKey });
 
       // Définir l'ID utilisateur si fourni
       if (userId) {
@@ -124,11 +84,11 @@ class RevenueCatService {
   /**
    * Récupère les offres d'abonnement disponibles
    */
-  async getOfferings(): Promise<any | null> {
-    if (!this.isRevenueCatAvailable) {
-      console.warn("Mode simulation : retour d'offres factices");
-      return null;
-    }
+  async getOfferings(): Promise<PurchasesOffering | null> {
+    // if (!this.isRevenueCatAvailable) {
+    //   console.warn("Mode simulation : retour d'offres factices");
+    //   return null;
+    // }
 
     try {
       const offerings = await Purchases.getOfferings();
@@ -140,41 +100,45 @@ class RevenueCatService {
   }
 
   /**
-   /**
-    * Effectue un achat d'abonnement
-    */
-  async purchasePackage(packageToPurchase: any): Promise<{
+   * Effectue un achat d'abonnement
+   */
+  async purchasePackage(packageToPurchase: PurchasesPackage): Promise<{
     success: boolean;
-    customerInfo?: any;
+    customerInfo?: CustomerInfo;
     error?: string;
   }> {
-    if (!this.isRevenueCatAvailable) {
-      console.warn("Mode simulation : achat simulé avec succès");
-      return {
-        success: true,
-        error: "Mode simulation - achat simulé",
-      };
-    }
+    // if (!this.isRevenueCatAvailable) {
+    //   console.warn("Mode simulation : achat simulé avec succès");
+    //   return {
+    //     success: true,
+    //     error: "Mode simulation - achat simulé",
+    //   };
+    // }
 
     try {
-      const { customerInfo } = await Purchases.purchasePackage(
-        packageToPurchase
-      );
+      const { customerInfo } =
+        await Purchases.purchasePackage(packageToPurchase);
       return {
         success: true,
         customerInfo,
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Erreur lors de l'achat:", error);
 
-      if (error instanceof PurchasesError) {
+      const purchasesError = error as PurchasesError;
+
+      if (purchasesError.code) {
         // Gestion des erreurs spécifiques
-        if (error.code === PURCHASES_ERROR_CODE.PURCHASE_CANCELLED) {
+        if (
+          purchasesError.code === PURCHASES_ERROR_CODE.PURCHASE_CANCELLED_ERROR
+        ) {
           return {
             success: false,
             error: "Achat annulé par l'utilisateur",
           };
-        } else if (error.code === PURCHASES_ERROR_CODE.PAYMENT_PENDING) {
+        } else if (
+          purchasesError.code === PURCHASES_ERROR_CODE.PAYMENT_PENDING_ERROR
+        ) {
           return {
             success: false,
             error: "Paiement en attente",
@@ -193,10 +157,10 @@ class RevenueCatService {
    * Récupère les informations d'abonnement de l'utilisateur
    */
   async getSubscriptionInfo(): Promise<SubscriptionInfo> {
-    if (!this.isRevenueCatAvailable) {
-      console.warn("Mode simulation : retour d'infos d'abonnement factices");
-      return { isActive: false };
-    }
+    // if (!this.isRevenueCatAvailable) {
+    //   console.warn("Mode simulation : retour d'infos d'abonnement factices");
+    //   return { isActive: false };
+    // }
 
     try {
       const customerInfo = await Purchases.getCustomerInfo();
@@ -208,8 +172,8 @@ class RevenueCatService {
           isActive: true,
           productIdentifier: entitlement.productIdentifier,
           originalPurchaseDate: entitlement.originalPurchaseDate,
-          expirationDate: entitlement.expirationDate,
-          isTrialPeriod: entitlement.isTrialPeriod,
+          expirationDate: entitlement.expirationDate as string,
+          isTrialPeriod: entitlement.periodType === "TRIAL",
           isSandbox: entitlement.isSandbox,
         };
       }
@@ -218,7 +182,7 @@ class RevenueCatService {
     } catch (error) {
       console.error(
         "Erreur lors de la récupération des infos d'abonnement:",
-        error
+        error,
       );
       return { isActive: false };
     }
@@ -228,13 +192,20 @@ class RevenueCatService {
    * Vérifie si l'utilisateur a un abonnement actif
    */
   async isPremiumUser(): Promise<boolean> {
-    if (!this.isRevenueCatAvailable) {
-      console.warn("Mode simulation : utilisateur non premium");
-      return false;
-    }
-
     try {
       const customerInfo = await Purchases.getCustomerInfo();
+      console.log(
+        "[RevenueCat] Checking premium status for App User ID:",
+        customerInfo.originalAppUserId,
+      );
+      console.log(
+        "[RevenueCat] Active entitlements:",
+        Object.keys(customerInfo.entitlements.active),
+      );
+      console.log(
+        "isPremium ? :",
+        customerInfo.entitlements.active[RevenueCatService.ENTITLEMENT_ID],
+      );
       return (
         customerInfo.entitlements.active[RevenueCatService.ENTITLEMENT_ID] !==
         undefined
@@ -250,16 +221,16 @@ class RevenueCatService {
    */
   async restorePurchases(): Promise<{
     success: boolean;
-    customerInfo?: any;
+    customerInfo?: CustomerInfo;
     error?: string;
   }> {
-    if (!this.isRevenueCatAvailable) {
-      console.warn("Mode simulation : restauration simulée");
-      return {
-        success: true,
-        error: "Mode simulation - restauration simulée",
-      };
-    }
+    // if (!this.isRevenueCatAvailable) {
+    //   console.warn("Mode simulation : restauration simulée");
+    //   return {
+    //     success: true,
+    //     error: "Mode simulation - restauration simulée",
+    //   };
+    // }
 
     try {
       const customerInfo = await Purchases.restorePurchases();
@@ -280,14 +251,19 @@ class RevenueCatService {
    * Connecte un utilisateur à RevenueCat
    */
   async loginUser(userId: string): Promise<void> {
-    if (!this.isRevenueCatAvailable) {
-      console.warn("Mode simulation : connexion utilisateur simulée");
-      return;
-    }
+    // if (!this.isRevenueCatAvailable) {
+    //   console.warn("Mode simulation : connexion utilisateur simulée");
+    //   return;
+    // }
 
     try {
-      await Purchases.logIn(userId);
-      console.log("Utilisateur connecté à RevenueCat:", userId);
+      const { customerInfo, created } = await Purchases.logIn(userId);
+      console.log("[RevenueCat] login result:", {
+        userId,
+        created,
+        originalAppUserId: customerInfo.originalAppUserId,
+      });
+      console.log("[RevenueCat] Utilisateur connecté à RevenueCat:", userId);
     } catch (error) {
       console.error("Erreur lors de la connexion utilisateur:", error);
       throw error;
@@ -298,14 +274,17 @@ class RevenueCatService {
    * Déconnecte l'utilisateur de RevenueCat
    */
   async logoutUser(): Promise<void> {
-    if (!this.isRevenueCatAvailable) {
-      console.warn("Mode simulation : déconnexion utilisateur simulée");
-      return;
-    }
+    // if (!this.isRevenueCatAvailable) {
+    //   console.warn("Mode simulation : déconnexion utilisateur simulée");
+    //   return;
+    // }
 
     try {
-      await Purchases.logOut();
-      console.log("Utilisateur déconnecté de RevenueCat");
+      const info = await Purchases.logOut();
+      console.log(
+        "[RevenueCat] Utilisateur déconnecté. Nouvel ID anonyme:",
+        info.originalAppUserId,
+      );
     } catch (error) {
       console.error("Erreur lors de la déconnexion utilisateur:", error);
       throw error;
@@ -318,10 +297,10 @@ class RevenueCatService {
   async setUserAttributes(attributes: {
     [key: string]: string | null;
   }): Promise<void> {
-    if (!this.isRevenueCatAvailable) {
-      console.warn("Mode simulation : configuration des attributs simulée");
-      return;
-    }
+    // if (!this.isRevenueCatAvailable) {
+    //   console.warn("Mode simulation : configuration des attributs simulée");
+    //   return;
+    // }
 
     try {
       await Purchases.setAttributes(attributes);

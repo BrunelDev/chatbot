@@ -18,6 +18,7 @@ import {
 import { PrimaryButton } from "@/components/buttons/primaryButton";
 import { GoBack } from "@/components/headers/goBack";
 import profileService from "@/services/profile";
+import RevenueCatService from "@/services/revenueCatService";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router } from "expo-router";
 import { Eye, EyeOff, Lock, Mail } from "lucide-react-native";
@@ -57,12 +58,20 @@ export default function AuthScreen() {
       // Sign in avec la session
       signIn(sessionData);
 
+      // Identifier l'utilisateur dans RevenueCat
+      try {
+        console.log("-------Identifying user in RevenueCat:", response.user.id.toString());
+        await RevenueCatService.loginUser(response.user.id.toString());
+      } catch (e) {
+        console.error("Failed to identify user in RevenueCat:", e);
+      }
+
       // Vérifier si l'utilisateur a un profil capillaire complet
       try {
         const hairResponse = await profileService.getBioProfile();
         await AsyncStorage.setItem(
           "hairProfile",
-          JSON.stringify(hairResponse.hair_profile)
+          JSON.stringify(hairResponse.hair_profile),
         );
 
         // Si l'utilisateur a un profil complet, rediriger vers la page d'accueil
@@ -78,7 +87,7 @@ export default function AuthScreen() {
                 text: "Continuer",
                 onPress: () => router.replace("/(tabs)/home"),
               },
-            ]
+            ],
           );
         } else {
           // Sinon, rediriger vers le formulaire de profil capillaire
@@ -90,7 +99,7 @@ export default function AuthScreen() {
                 text: "Continuer",
                 onPress: () => router.replace("/profil_capillaire/formOne"),
               },
-            ]
+            ],
           );
         }
       } catch (profileError) {
@@ -175,11 +184,9 @@ export default function AuthScreen() {
                       onPress={togglePasswordVisibility}
                       style={styles.eyeIcon}
                     >
-                      {!showPassword ? (
+                      {!showPassword ?
                         <EyeOff color="#333" size={18} />
-                      ) : (
-                        <Eye color="#333" size={18} />
-                      )}
+                      : <Eye color="#333" size={18} />}
                     </TouchableOpacity>
                   </View>
                 </View>

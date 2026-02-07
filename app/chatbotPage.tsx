@@ -5,6 +5,7 @@ import {
   StartConversationPayload,
   startOrContinueConversation,
 } from "@/services/chatBotService";
+import RevenueCatService from "@/services/revenueCatService";
 import { Chat, defaultTheme, MessageType } from "@flyerhq/react-native-chat-ui";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFocusEffect } from "expo-router";
@@ -23,6 +24,7 @@ const ChatPage = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [currentChatId, setCurrentChatId] = useState<string | undefined>();
   const [messages, setMessages] = useState<MessageType.Any[]>([]);
+  const [isPremium, setIsPremium] = useState(false);
   const user = { id: "06c33e8b-e835-4736-80f4-63f44b66666c" };
 
   const renderBubble = ({
@@ -63,7 +65,9 @@ const ChatPage = () => {
   useFocusEffect(
     useCallback(() => {
       const loadChatId = async () => {
-        console.log("start");
+        console.log("___start");
+        const isPremiumUser = await RevenueCatService.isPremiumUser();
+        setIsPremium(isPremiumUser);
         try {
           const chatId = await AsyncStorage.getItem("chatId");
           if (chatId) {
@@ -95,7 +99,7 @@ const ChatPage = () => {
                 author:
                   message.message_type === "user" ? user : { id: "assistant" },
                 text: message.content,
-              }))
+              })),
             );
           }
         } catch (error) {
@@ -103,7 +107,7 @@ const ChatPage = () => {
         }
       };
       loadChatId();
-    }, [])
+    }, []),
   );
 
   const handleSendPress = async (message: MessageType.PartialText) => {
@@ -195,7 +199,10 @@ const ChatPage = () => {
   return (
     <View className="bg-candlelight-50 h-full w-full">
       <View className="mt-[50px] px-4">
-        <ChatHeadBar onMenuPress={() => setIsSidebarOpen(true)} />
+        <ChatHeadBar
+          onMenuPress={() => setIsSidebarOpen(true)}
+          isPremium={isPremium}
+        />
       </View>
       <View className="flex-1">
         <Chat

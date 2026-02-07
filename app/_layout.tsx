@@ -12,8 +12,6 @@ import "react-native-reanimated";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import "./global.css";
 
-import Purchases, { LOG_LEVEL } from "react-native-purchases";
-
 import { useColorScheme } from "@/hooks/useColorScheme";
 import RevenueCatService from "@/services/revenueCatService";
 import React, { useEffect } from "react";
@@ -29,8 +27,7 @@ export default function RootLayout() {
   });
 
   useEffect(() => {
-    Purchases.setLogLevel(LOG_LEVEL.VERBOSE);
-    // Use the service for initialization to ensure consistent configuration across platforms
+    // Initialisation via le service (import conditionnel + compat Expo Go)
     RevenueCatService.initialize();
   }, []);
 

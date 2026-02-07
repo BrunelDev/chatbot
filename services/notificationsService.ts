@@ -57,7 +57,6 @@ const notificationsService = {
         : "/notifications/";
 
       const { data } = await apiClient.get<NotificationsResponse>(url);
-      console.log("liste :", data)
       return data;
     } catch (error) {
       throw handleApiError(error, "Failed to load notifications.");
@@ -69,7 +68,6 @@ const notificationsService = {
       const { data } = await apiClient.get<NotificationStats>(
         "/notifications/stats/"
       );
-      console.log("liste2" , data);
       return data;
     } catch (error) {
       throw handleApiError(error, "Failed to load notification stats.");

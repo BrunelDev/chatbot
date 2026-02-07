@@ -98,7 +98,7 @@ export default function FormTwo() {
         </ScrollView>
 
         {/* Sticky footer button */}
-        <View className="absolute w-full bottom-10 left-4 flex flex-row items-center justify-between ">
+        <View className="absolute w-full bottom-0 py-5 left-4 flex flex-row items-center justify-between bg-candlelight-50">
           <TouchableOpacity
             className="flex flex-row items-center"
             onPress={() => {
